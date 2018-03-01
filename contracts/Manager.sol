@@ -2,24 +2,24 @@ pragma solidity ^0.4.17;
 
 contract Manager {
     address owner;
-    address[] addresses;
-    uint[] amounts;
-    uint tokensReceived;
+    uint totalTokens;
+    uint pledgedAmount;
     mapping (address => uint) contributions;
 
+    event Log(uint n);
 
     function Manager() public {
         owner = msg.sender;
     }
 
-    function setTokens(uint _tokensAmount) public { tokensReceived = _tokensAmount; }
-
-    function setContributions(address[] _addresses, uint[] _amounts) public {
+    function setContributions(address[] addresses, uint[] amounts) public {
         assert(msg.sender == owner); // only owner can set contributions
-        assert(_addresses.length == _amounts.length);
-        for (uint i = 0; i <= _addresses.length-1; i++) {
-            setContribution(_addresses[i], _amounts[i]);
+        assert(addresses.length == amounts.length);
+        for (uint i = 0; i <= addresses.length-1; i++) {
+            pledgedAmount += amounts[i] * 1 ether ;
+            setContribution(addresses[i], amounts[i] * 1 ether);
         }
+        Log(pledgedAmount);
     }
 
     function setContribution(address _address, uint _amount) internal {
@@ -30,11 +30,16 @@ contract Manager {
         return contributions[contributor];
     }
 
-    function getTokens(address contributor) public view returns (uint) {
-        return (contributions[contributor] * tokensReceived);
+    function contributionPercentage(address contributor) public view returns (uint) {
+        return getContribution(contributor) / pledgedAmount;
     }
 
-    function getTokensAmount() public view returns (uint) {
-        return tokensReceived;
+    function setTokensReceived(uint amount, uint decimals) public { totalTokens = amount * 10**decimals; }
+    function getTokensAmount() public view returns (uint) { return totalTokens; }
+
+    function getPledgedAmount() public view returns (uint) { return pledgedAmount; }
+
+    function getTokens(address contributor) public view returns (uint) {
+        return ((getContribution(contributor) * totalTokens) / pledgedAmount);
     }
 }
