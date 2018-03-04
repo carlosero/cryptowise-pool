@@ -14,7 +14,16 @@ contract('manager', async (accounts)  => {
 			assert.equal(balance.valueOf(), 12345);
 		});
 		it("should allow me to withdraw the ether I sent", async ()  => {
-
+			let instance = await Manager.deployed();
+			let account = accounts[1];
+			await instance.sendTransaction({
+               value: 12345,
+               from: account,
+               gas: 150000
+            });
+            await instance.withdrawContribution({from: account});
+            let balance = await instance.getContribution({from: account});
+            assert.equal(balance.valueOf(), 0);
 		});
 		it("should know how much I contributed in total", async ()  => {
 

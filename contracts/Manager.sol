@@ -43,12 +43,12 @@ contract Manager {
     }
 
     // withdraws contribution
-    function withdraw(uint256 _amount) public {
-        assert(contributions[msg.sender] > _amount);
-        contributions[msg.sender] = SafeMath.sub(contributions[msg.sender], _amount);
-        poolContribution -= _amount;
-        msg.sender.transfer(_amount);
-        Withdrawed(msg.sender, _amount);
+    function withdrawContribution() public {
+        assert(contributions[msg.sender] > 0);
+        msg.sender.transfer(contributions[msg.sender]);
+        Withdrawed(msg.sender, contributions[msg.sender]);
+        poolContribution -= contributions[msg.sender];
+        contributions[msg.sender] = 0;
     }
 
     // contributed amount
