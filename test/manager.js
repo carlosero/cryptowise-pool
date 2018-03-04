@@ -11,7 +11,7 @@ contract('manager', async (accounts)  => {
 	context('as contributor', async ()  => {
 		it("should allow me to contribute ether", async ()  => {
 			await this.instance.sendTransaction({ value: 12345, from: this.investors[0] });
-            let balance = await this.instance.getContribution.call({from: this.investors[0]});
+            let balance = await this.instance.contributions.call(this.investors[0]);
 			assert.equal(balance.valueOf(), 12345);
 		});
 
@@ -21,20 +21,20 @@ contract('manager', async (accounts)  => {
             gas = res.receipt.gasUsed * 100000000000;
             newBalance = web3.eth.getBalance(this.investors[0]).valueOf();
             assert.equal(newBalance, investorBalance-gas+12345)
-            let balance = await this.instance.getContribution.call({from: this.investors[0]});
+            let balance = await this.instance.contributions.call(this.investors[0]);
             assert.equal(balance.valueOf(), 0);
 		});
 
 		it("should allow me to contribute again after withdrawal", async ()  => {
 			await this.instance.sendTransaction({ value: 12345, from: this.investors[0] });
-            let balance = await this.instance.getContribution.call({from: this.investors[0]});
+            let balance = await this.instance.contributions.call(this.investors[0]);
 			assert.equal(balance.valueOf(), 12345);
 		});
 
 		it("should allow me to contribute many times and keep the right balances", async ()  => {
 			await this.instance.sendTransaction({ value: 12345, from: this.investors[0] });
 			await this.instance.sendTransaction({ value: 12345, from: this.investors[0] });
-            let balance = await this.instance.getContribution.call({from: this.investors[0]});
+            let balance = await this.instance.contributions.call(this.investors[0]);
 			assert.equal(balance.valueOf(), 12345*3);
 		});
 
