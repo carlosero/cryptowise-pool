@@ -45,10 +45,13 @@ contract('manager', async (accounts)  => {
 		it('should allow me to setup admins', async ()  => {
 			admins = [accounts[1], accounts[3], accounts[5]];
 			await this.instance.setAdmins(admins, {from: accounts[0]});
-			admins.push(accounts[0])
 			for (i = 0; i < 3; i++) {
 				assert.equal(await this.instance.admins.call(i), admins[i]);
 			}
+		});
+		it('should set myself as admin when I set admins', async ()  => {
+			await this.instance.setAdmins([accounts[1]], {from: accounts[0]});
+			assert.equal(await this.instance.admins.call(1), accounts[0]);
 		});
 	});
 	context('as admin', async ()  => {
