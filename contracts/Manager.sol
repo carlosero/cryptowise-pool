@@ -51,6 +51,11 @@ contract Manager {
         Withdrawed(msg.sender, _amount);
     }
 
+    // contributed amount
+    function getContribution() public view returns (uint256) {
+        return contributions[msg.sender];
+    }
+
     // sends contribution to ICO/presale address
     function sendContribution(address _to) public onlyAdmin {
         assert(this.balance >= poolContribution);
