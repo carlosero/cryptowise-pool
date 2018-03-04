@@ -45,11 +45,12 @@ contract Manager {
 
     // withdraws contribution
     function withdrawContribution() public {
-        assert(contributions[msg.sender] > 0);
-        msg.sender.transfer(contributions[msg.sender]);
-        Withdrawed(msg.sender, contributions[msg.sender]);
-        poolContribution -= contributions[msg.sender];
+        uint256 amount = contributions[msg.sender];
+        assert(amount > 0 && amount <= poolContribution);
+        poolContribution -= amount;
         contributions[msg.sender] = 0;
+        Withdrawed(msg.sender, amount);
+        msg.sender.transfer(amount);
     }
 
     // contributed amount
