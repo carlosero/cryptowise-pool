@@ -1,6 +1,6 @@
 pragma solidity ^0.4.17;
 
-import "SafeMath.sol";
+import "./SafeMath.sol";
 
 contract Manager {
     address owner;
@@ -35,22 +35,22 @@ contract Manager {
         contributors.push(msg.sender);
         contributions[msg.sender] += msg.value;
         poolContribution += msg.value;
-        emit Contributed(msg.sender, msg.value);
+        Contributed(msg.sender, msg.value);
     }
 
     // withdraws contribution
     function withdraw(uint256 _amount) public {
         assert(contributions[msg.sender] > _amount);
         contributions[msg.sender] = SafeMath.sub(contributions[msg.sender], _amount);
-        poolContribution -= msg.value;
-        this.transfer(msg.sender, _amount);
-        emit Withdrawed(msg.sender, _amount);
+        poolContribution -= _amount;
+        msg.sender.transfer(_amount);
+        Withdrawed(msg.sender, _amount);
     }
 
     // sends contribution to ICO/presale address
     function sendContribution(address _to) public onlyAdmin {
         assert(this.balance >= poolContribution);
-        this.transfer(_to, poolContribution);
-        emit PoolContributionSent(_to, poolContribution);
+        _to.transfer(poolContribution);
+        PoolContributionSent(_to, poolContribution);
     }
 }
