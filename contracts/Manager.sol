@@ -6,15 +6,15 @@ contract Manager {
     address owner;
 
     // contributors
-    address[] contributors;
-    mapping (address => uint256) contributions;
+    address[] public contributors;
+    mapping (address => uint256) public contributions;
 
     // admins
-    address[] admins;
+    address[] public admins;
     mapping (address => bool) isAdmin;
 
     // generals
-    uint256 poolContribution;
+    uint256 public poolContribution;
 
     event Contributed(address _address, uint256 _amount);
     event Withdrawed(address _address, uint256 _amount);
