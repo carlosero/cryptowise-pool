@@ -11,11 +11,10 @@ contract Manager {
 
     // admins
     address[] admins;
+    mapping (address => bool) isAdminOfPool;
 
     // generals
     uint256 poolContribution;
-
-    //I should see entire contribution of pool
 
     event Contributed(address _address, uint256 _amount);
     event Withdrawed(address _address, uint256 _amount);
@@ -23,7 +22,12 @@ contract Manager {
     function Manager(address[] _admins) public {
         owner = msg.sender;
         admins = _admins;
+        for (uint i = 0; i < _admins.length; i++) {
+            isAdminOfPool[_admins[i]] = true
+        }
     }
+
+    modifier isAdmin { require(isAdminOfPool[msg.sender]); _; }
 
     function () public payable { // default action is contribute
         contributors.push(msg.sender);
