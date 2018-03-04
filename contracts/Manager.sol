@@ -15,8 +15,12 @@ contract Manager {
     mapping (address => bool) public isAdmin;
 
     // generals
-    uint256 public poolFeePercentage; // 0.03 * 100
+    uint256 public poolFeePercentage; // 0.03 * 1000
     uint256 public poolContribution;
+    uint256 public poolFees;
+
+    // constants
+    uint256 public PERCENTAGE_MULTIPLIER = 1000;
 
     event Contributed(address _address, uint256 _amount);
     event Withdrawed(address _address, uint256 _amount);
@@ -51,25 +55,33 @@ contract Manager {
             contributors.push(msg.sender);
         }
         contributions[msg.sender] += msg.value;
-        poolContribution += msg.value;
+        uint256 contrib = contributionWithoutFees(msg.value);
+        poolContribution += contrib;
+        poolFees += (msg.value - contrib);
         Contributed(msg.sender, msg.value);
     }
 
     // withdraws contribution
     function withdrawContribution() public {
         uint256 amount = contributions[msg.sender];
-        assert(amount > 0 && amount <= poolContribution);
-        poolContribution -= amount;
+        assert(amount > 0 && amount <= this.balance);
+        uint256 contrib = contributionWithoutFees(amount);
+        poolContribution -= contrib;
+        poolFees -= amount - contrib;
         contributions[msg.sender] = 0;
         Withdrawed(msg.sender, amount);
         msg.sender.transfer(amount);
     }
-
 
     // sends contribution to ICO/presale address
     function sendContribution(address _to) public onlyAdmin {
         assert(this.balance >= poolContribution);
         _to.transfer(poolContribution);
         PoolContributionSent(_to, poolContribution);
+    }
+
+    // calculations
+    function contributionWithoutFees(uint256 amount) internal view returns (uint256) {
+        return (PERCENTAGE_MULTIPLIER - poolFeePercentage) * amount / PERCENTAGE_MULTIPLIER;
     }
 }
