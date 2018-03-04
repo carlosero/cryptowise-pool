@@ -40,6 +40,11 @@ contract('manager', async (accounts)  => {
 		it("should not allow me to modify admins", async ()  => {
          	await expectThrow(this.instance.setAdmins([accounts[2]], {from: accounts[1]}), "Error");
 		});
+		it("should not allow me to send contribution of pool to X address", async ()  => {
+			let icoAddress = '0x123306090abab3a6e1400e9345bc60c78a8bef57';
+			await this.instance.sendTransaction({value: 12345, from: accounts[0]});
+         	await expectThrow(this.instance.sendContribution(icoAddress, {from: accounts[6]}), "Error");
+		});
 	});
 	context('as the owner', async ()  => {
 		it('should allow me to setup admins', async ()  => {
@@ -56,7 +61,11 @@ contract('manager', async (accounts)  => {
 	});
 	context('as admin', async ()  => {
 		it("should allow me to send contribution of pool to X address", async ()  => {
-
+			let icoAddress = '0x123306090abab3a6e1400e9345bc60c78a8bef57';
+			await this.instance.sendTransaction({value: 12345, from: accounts[0]});
+			let poolContribution = await this.instance.poolContribution.call();
+			await this.instance.sendContribution(icoAddress, {from: accounts[0]});
+			assert.equal(web3.eth.getBalance(icoAddress).valueOf(), poolContribution.valueOf());
 		});
 	});
 });
