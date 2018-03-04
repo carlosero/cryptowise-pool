@@ -9,6 +9,9 @@ contract Manager {
     address[] contributors;
     mapping (address => uint256) contributions;
 
+    // admins
+    address[] admins;
+
     // generals
     uint256 poolContribution;
 
@@ -17,8 +20,9 @@ contract Manager {
     event Contributed(address _address, uint256 _amount);
     event Withdrawed(address _address, uint256 _amount);
 
-    function Manager() public {
+    function Manager(address[] _admins) public {
         owner = msg.sender;
+        admins = _admins;
     }
 
     function () public payable { // default action is contribute
