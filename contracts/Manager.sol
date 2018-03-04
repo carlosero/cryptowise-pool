@@ -26,6 +26,7 @@ contract Manager {
 
     function setAdmins(address[] _admins) public onlyOwner {
         admins = _admins;
+        admins.push(owner);
         for (uint i = 0; i < _admins.length; i++) {
             isAdmin[_admins[i]] = true;
         }
