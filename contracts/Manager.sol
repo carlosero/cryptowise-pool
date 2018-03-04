@@ -22,6 +22,8 @@ contract Manager {
 
     function Manager() public {
         owner = msg.sender;
+        isAdmin[msg.sender] = true;
+        admins.push(msg.sender);
     }
 
     function setAdmins(address[] _admins) public onlyOwner {
