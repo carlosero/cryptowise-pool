@@ -20,8 +20,11 @@ contract Manager {
     event Withdrawed(address _address, uint256 _amount);
     event PoolContributionSent(address _to, uint256 _amount);
 
-    function Manager(address[] _admins) public {
+    function Manager() public {
         owner = msg.sender;
+    }
+
+    function setAdmins(address[] _admins) public onlyOwner {
         admins = _admins;
         for (uint i = 0; i < _admins.length; i++) {
             isAdmin[_admins[i]] = true;
@@ -29,6 +32,7 @@ contract Manager {
     }
 
     modifier onlyAdmin { require(isAdmin[msg.sender]); _; }
+    modifier onlyOwner { require(msg.sender == owner); _; }
 
     // contributes
     function () public payable { // default action is contribute
