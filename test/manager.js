@@ -1,3 +1,4 @@
+var expectThrow = require('./helpers/expectThrow');
 var Manager = artifacts.require("./Manager.sol");
 
 contract('manager', async (accounts)  => {
@@ -25,11 +26,16 @@ contract('manager', async (accounts)  => {
             let balance = await instance.getContribution({from: account});
             assert.equal(balance.valueOf(), 0);
 		});
-		it("should know how much I contributed in total", async ()  => {
-
-		});
-		it("should know the contribution of pool", async ()  => {
-
+		it("should not allow me to withdraw more than the ether I sent", async ()  => {
+			let instance = await Manager.deployed();
+			let account = accounts[1];
+			await instance.sendTransaction({
+               value: 12345,
+               from: account,
+               gas: 150000
+            });
+            await instance.withdrawContribution({from: account});
+         	await expectThrow(instance.withdrawContribution({from: account}), "Error");
 		});
 	});
 	context('as the owner', async ()  => {
