@@ -15,16 +15,23 @@ contract Manager {
     mapping (address => bool) public isAdmin;
 
     // generals
+    uint256 public poolFeePercentage; // 0.03 * 100
     uint256 public poolContribution;
 
     event Contributed(address _address, uint256 _amount);
     event Withdrawed(address _address, uint256 _amount);
     event PoolContributionSent(address _to, uint256 _amount);
 
-    function Manager() public {
+    function Manager(uint256 _poolFeePercentage) public {
+        configurePool(_poolFeePercentage); // to be handled on UI, 0.025 = 25 (x 1000)
         owner = msg.sender;
         isAdmin[msg.sender] = true;
         admins.push(msg.sender);
+    }
+
+    function configurePool(uint256 _poolFeePercentage) internal {
+        require(_poolFeePercentage >= 0 && _poolFeePercentage <= 1000);
+        poolFeePercentage = _poolFeePercentage;
     }
 
     function setAdmins(address[] _admins) public onlyOwner {
