@@ -11,7 +11,7 @@ contract Manager {
 
     // admins
     address[] public admins;
-    mapping (address => bool) isAdmin;
+    mapping (address => bool) public isAdmin;
 
     // generals
     uint256 public poolContribution;
@@ -29,8 +29,8 @@ contract Manager {
     function setAdmins(address[] _admins) public onlyOwner {
         admins = _admins;
         admins.push(owner);
-        for (uint i = 0; i < _admins.length; i++) {
-            isAdmin[_admins[i]] = true;
+        for (uint i = 0; i < admins.length; i++) {
+            isAdmin[admins[i]] = true;
         }
     }
 
