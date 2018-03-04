@@ -7,6 +7,7 @@ contract Manager {
 
     // contributors
     address[] public contributors;
+    mapping (address => bool) public isContributor;
     mapping (address => uint256) public contributions;
 
     // admins
@@ -39,7 +40,9 @@ contract Manager {
 
     // contributes
     function () public payable { // default action is contribute
-        contributors.push(msg.sender);
+        if (!isContributor[msg.sender]) {
+            contributors.push(msg.sender);
+        }
         contributions[msg.sender] += msg.value;
         poolContribution += msg.value;
         Contributed(msg.sender, msg.value);

@@ -31,6 +31,13 @@ contract('manager', async (accounts)  => {
 			assert.equal(balance.valueOf(), 12345);
 		});
 
+		it("should allow me to contribute many times and keep the right balances", async ()  => {
+			await this.instance.sendTransaction({ value: 12345, from: this.investors[0] });
+			await this.instance.sendTransaction({ value: 12345, from: this.investors[0] });
+            let balance = await this.instance.getContribution.call({from: this.investors[0]});
+			assert.equal(balance.valueOf(), 12345*3);
+		});
+
 		it("should not allow me to withdraw more than the ether I sent", async ()  => {
             await this.instance.withdrawContribution({from: this.investors[0]});
          	await expectThrow(this.instance.withdrawContribution({from: this.investors[0]}), "Error");
