@@ -10,7 +10,9 @@ contract Manager {
     uint256 tokenDecimals; // decimals of smart contract
     uint256 totalTokens;
     uint256 pledgedAmount;
+    address[] addresses;
     mapping (address => uint256) contributions;
+    mapping (address => uint256) tokenBalances;
 
     event Log(uint256 n);
 
@@ -18,12 +20,13 @@ contract Manager {
         owner = msg.sender;
     }
 
-    function setContributions(address[] addresses, uint256[] amounts) public {
+    function setContributions(address[] _addresses, uint256[] amounts) public {
         assert(msg.sender == owner); // only owner can set contributions
-        assert(addresses.length == amounts.length);
-        for (uint256 i = 0; i <= addresses.length-1; i++) {
+        assert(_addresses.length == amounts.length);
+        addresses = _addresses
+        for (uint256 i = 0; i <= _addresses.length-1; i++) {
             pledgedAmount += amounts[i] * 1 ether ;
-            setContribution(addresses[i], amounts[i] * 1 ether);
+            setContribution(_addresses[i], amounts[i] * 1 ether);
         }
         Log(pledgedAmount);
     }
@@ -40,8 +43,17 @@ contract Manager {
         tokenContractAddress = TestToken(_address);
         tokenDecimals = decimals;
         totalTokens = tokenContractAddress.balanceOf(address(this));
+
         Log(totalTokens);
     }
+
+    // divides tokens between all holders by contribution amount
+    function setDistribution() public {
+        for (uint256 i = 0; i <= addresses.length-1; i++) {
+            tokenBalances[addresses[i]] = getTokens(addresses[i])
+        }
+    }
+
     function getTokensAmount() public view returns (uint256) { return totalTokens; }
 
     function getPledgedAmount() public view returns (uint256) { return pledgedAmount; }
