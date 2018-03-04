@@ -2,40 +2,40 @@ var expectThrow = require('./helpers/expectThrow');
 var Manager = artifacts.require("./Manager.sol");
 
 contract('manager', async (accounts)  => {
+	beforeEach(async () => {
+		this.instance = await Manager.deployed();
+	})
 	context('as contributor', async ()  => {
 		it("should allow me to send ether to it", async ()  => {
-			let instance = await Manager.deployed();
 			let account = accounts[0];
-			await instance.sendTransaction({
+			await this.instance.sendTransaction({
                value: 12345,
                from: account,
                gas: 150000
             });
-            let balance = await instance.getContribution.call({from: account});
+            let balance = await this.instance.getContribution.call({from: account});
 			assert.equal(balance.valueOf(), 12345);
 		});
 		it("should allow me to withdraw the ether I sent", async ()  => {
-			let instance = await Manager.deployed();
 			let account = accounts[1];
-			await instance.sendTransaction({
+			await this.instance.sendTransaction({
                value: 12345,
                from: account,
                gas: 150000
             });
-            await instance.withdrawContribution({from: account});
-            let balance = await instance.getContribution({from: account});
+            await this.instance.withdrawContribution({from: account});
+            let balance = await this.instance.getContribution({from: account});
             assert.equal(balance.valueOf(), 0);
 		});
 		it("should not allow me to withdraw more than the ether I sent", async ()  => {
-			let instance = await Manager.deployed();
 			let account = accounts[1];
-			await instance.sendTransaction({
+			await this.instance.sendTransaction({
                value: 12345,
                from: account,
                gas: 150000
             });
-            await instance.withdrawContribution({from: account});
-         	await expectThrow(instance.withdrawContribution({from: account}), "Error");
+            await this.instance.withdrawContribution({from: account});
+         	await expectThrow(this.instance.withdrawContribution({from: account}), "Error");
 		});
 	});
 	context('as the owner', async ()  => {
