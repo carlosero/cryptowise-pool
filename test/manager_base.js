@@ -16,6 +16,18 @@ contract('manager base functionality', async (accounts)  => {
 			assert.equal(balance.valueOf(), 12340000);
 		});
 
+		it('should not allow me to contribute less than min contribution', async () => {
+			let instance = await Manager.new(0, 1000, 0);
+			await instance.sendTransaction({ value: 1000, from: this.investors[1] });
+         	await expectThrow(instance.sendTransaction({ value: 999, from: this.investors[1] }), "Error");
+		});
+
+		it('should not allow me to contribute more than max contribution', async () => {
+			let instance = await Manager.new(0, 0, 1000);
+			await instance.sendTransaction({ value: 1000, from: this.investors[1] });
+         	await expectThrow(instance.sendTransaction({ value: 1001, from: this.investors[1] }), "Error");
+		});
+
 		it("and should calculate my contribution and fees apart", async () => {
 			let poolContribution = await this.instance.poolContribution.call();
 			let poolFees = await this.instance.poolFees.call();
