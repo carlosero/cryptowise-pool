@@ -15,6 +15,13 @@ contract('manager', async (accounts)  => {
 			assert.equal(balance.valueOf(), 12345);
 		});
 
+		it("and should calculate my contribution and fees apart", async () => {
+			let poolContribution = await this.instance.poolContribution.call();
+			let poolFees = await this.instance.poolFees.call();
+			assert.equal(poolContribution.valueOf(), 11974);
+			assert.equal(poolFees.valueOf(), 371);
+		});
+
 		it("should allow me to withdraw the ether I contributed", async ()  => {
 			investorBalance = web3.eth.getBalance(this.investors[0]).valueOf();
             let res = await this.instance.withdrawContribution({from: this.investors[0]});
@@ -23,6 +30,13 @@ contract('manager', async (accounts)  => {
             assert.equal(newBalance, investorBalance-gas+12345)
             let balance = await this.instance.contributions.call(this.investors[0]);
             assert.equal(balance.valueOf(), 0);
+		});
+
+		it("and should re-calculate pool contribution and fees", async () => {
+			let poolContribution = await this.instance.poolContribution.call();
+			let poolFees = await this.instance.poolFees.call();
+			assert.equal(poolContribution.valueOf(), 0);
+			assert.equal(poolFees.valueOf(), 0);
 		});
 
 		it("should allow me to contribute again after withdrawal", async ()  => {
@@ -92,6 +106,7 @@ contract('manager', async (accounts)  => {
 			let poolFees = await instance.poolFees.call();
 			assert.equal(poolContribution.valueOf(), 4387500000000);
 			assert.equal(poolFees.valueOf(), 112500000000);
+
 		});
 		it('when fees is 0.2', async () => {
 			let instance = await Manager.new(20);
