@@ -162,6 +162,6 @@ contract Manager {
     }
 
     function shareOf(address _contributor) internal view returns (uint256) {
-        contributionWithoutFees(contributions[_contributor]) * tokenBalance / poolContribution
+        contributionWithoutFees(contributions[_contributor]) * tokenBalance / poolContribution;
     }
 }

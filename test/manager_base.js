@@ -121,8 +121,13 @@ contract('manager base functionality', async (accounts)  => {
 			await transactTo(this.instance, 1, this.admins[2]);
 			await this.instance.sendContribution(icoAddress, {from: this.admins[2]});
 			assert.equal(web3.eth.getBalance(icoAddress).valueOf(), poolContribution.valueOf());
-            poolContribution = await this.instance.poolContribution.call();
-            assert.equal(poolContribution.valueOf(), 0);
+            poolContributionSent = await this.instance.poolContributionSent.call();
+            assert.equal(poolContributionSent.valueOf(), true);
+		});
+
+		it("should not allow me to send contribution of pool twice", async () => {
+			let icoAddress = '0x123306090abab3a6e1400e9345bc60c78a8bef57';
+         	await expectThrow(this.instance.sendContribution(icoAddress, {from: this.admins[2]}), "Error");
 		});
 
 		it("should allow me to withdraw the pool fees", async () => {
@@ -134,8 +139,12 @@ contract('manager base functionality', async (accounts)  => {
             gas = res.receipt.gasUsed * 100000000000;
             newBalance = parseInt(web3.eth.getBalance(this.admins[1]).valueOf());
             assert.approximately(newBalance, adminBalance-gas+1110600, 100000);
-            let poolFees = await this.instance.poolFees.call();
-            assert.equal(poolFees.valueOf(), 0);
+            let poolFeesSent = await this.instance.poolFeesSent.call();
+            assert.equal(poolFeesSent.valueOf(), true);
+		});
+
+		it("should not allow me to withdraw pool fees twice", async () => {
+         	await expectThrow(this.instance.collectFees({from: this.admins[1]}), "Error");
 		});
 
 		it("should allow me to move funds between accounts", async () => {
