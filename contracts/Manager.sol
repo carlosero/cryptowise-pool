@@ -24,6 +24,7 @@ contract Manager {
     uint256 public poolFees;
     uint256 public individualMinContribution;
     uint256 public individualMaxContribution;
+    uint256 public poolMaxContribution;
 
     // constants
     uint256 public PERCENTAGE_MULTIPLIER = 10000;
@@ -34,20 +35,23 @@ contract Manager {
     event PoolFeesSent(address _to, uint256 _amount);
     event StateChanged(uint256 _to);
 
-    function Manager(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution) public {
-        configurePool(_poolFeePercentage, _individualMinContribution, _individualMaxContribution); // to be handled on UI, 0.025 = 25 (x 1000)
+    function Manager(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution) public {
+        configurePool(_poolFeePercentage, _individualMinContribution, _individualMaxContribution, _poolMaxContribution); // to be handled on UI, 0.025 = 25 (x 1000)
         owner = msg.sender;
         isAdmin[msg.sender] = true;
         admins.push(msg.sender);
     }
 
-    function configurePool(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution) internal {
+    function configurePool(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution) internal {
         require(_poolFeePercentage >= 0 && _poolFeePercentage <= PERCENTAGE_MULTIPLIER);
         require(_individualMinContribution >= 0);
+        require(_poolMaxContribution == 0 || _individualMinContribution <= _poolMaxContribution);
         require(_individualMaxContribution >= 0);
+        require(_poolMaxContribution == 0 || _individualMaxContribution <= _poolMaxContribution);
         poolFeePercentage = _poolFeePercentage;
         individualMinContribution = _individualMinContribution;
         individualMaxContribution = _individualMaxContribution;
+        poolMaxContribution = _poolMaxContribution;
     }
 
     function setAdmins(address[] _admins) public whileOpened onlyOwner {
@@ -71,11 +75,12 @@ contract Manager {
     function () public payable whileOpened { // default action is contribute
         require(individualMinContribution == 0 || msg.value >= individualMinContribution);
         require(individualMaxContribution == 0 || msg.value <= individualMaxContribution);
+        uint256 contrib = contributionWithoutFees(msg.value);
+        require(poolMaxContribution == 0 || (poolContribution + contrib) <= poolMaxContribution);
         if (!isContributor[msg.sender]) {
             contributors.push(msg.sender);
         }
         contributions[msg.sender] += msg.value;
-        uint256 contrib = contributionWithoutFees(msg.value);
         poolContribution += contrib;
         poolFees += (msg.value - contrib);
         Contributed(msg.sender, msg.value);
