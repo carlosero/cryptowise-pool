@@ -1,4 +1,5 @@
 var expectThrow = require('./helpers/expectThrow');
+var transactTo = require('./helpers/transactTo');
 var Manager = artifacts.require("./Manager.sol");
 
 contract('manager base functionality', async (accounts)  => {
@@ -49,7 +50,11 @@ contract('manager base functionality', async (accounts)  => {
 			await this.instance.sendTransaction({ value: 12345, from: this.investors[0] });
 			await this.instance.sendTransaction({ value: 12345, from: this.investors[0] });
             let balance = await this.instance.contributions.call(this.investors[0]);
+			let poolContribution = await this.instance.poolContribution.call();
+			let poolFees = await this.instance.poolFees.call();
 			assert.equal(balance.valueOf(), 12345*3);
+			assert.equal(poolContribution.valueOf(), 11974*3);
+			assert.equal(poolFees.valueOf(), 371*3);
 		});
 
 		it("should not allow me to withdraw more than the ether I sent", async ()  => {
@@ -89,13 +94,6 @@ contract('manager base functionality', async (accounts)  => {
 	});
 
 	context('as admin', async ()  => {
-		async function transactTo(instance, state, admin) {
-			curState = await instance.state.call();
-			if (curState.valueOf() != state) {
-				await instance.setState(state, {from: admin});
-			}
-
-		}
 		it("should allow me to send contribution of pool to X address", async ()  => {
 			await transactTo(this.instance, 0, this.admins[2]);
 			let icoAddress = '0x123306090abab3a6e1400e9345bc60c78a8bef57';
