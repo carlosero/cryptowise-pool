@@ -1,7 +1,7 @@
 var expectThrow = require('./helpers/expectThrow');
 var Manager = artifacts.require("./Manager.sol");
 
-contract('manager', async (accounts)  => {
+contract('manager base functionality', async (accounts)  => {
 	beforeEach(async () => {
 		this.instance = await Manager.deployed();
 		this.owner = accounts[0];
@@ -89,10 +89,19 @@ contract('manager', async (accounts)  => {
 	});
 
 	context('as admin', async ()  => {
+		async function transactTo(instance, state, admin) {
+			curState = await instance.state.call();
+			if (curState.valueOf() != state) {
+				await instance.setState(state, {from: admin});
+			}
+
+		}
 		it("should allow me to send contribution of pool to X address", async ()  => {
+			await transactTo(this.instance, 0, this.admins[2]);
 			let icoAddress = '0x123306090abab3a6e1400e9345bc60c78a8bef57';
 			await this.instance.sendTransaction({value: 12345, from: this.investors[2]});
 			let poolContribution = await this.instance.poolContribution.call();
+			await transactTo(this.instance, 1, this.admins[2]);
 			await this.instance.sendContribution(icoAddress, {from: this.admins[2]});
 			assert.equal(web3.eth.getBalance(icoAddress).valueOf(), poolContribution.valueOf());
             poolContribution = await this.instance.poolContribution.call();
@@ -100,66 +109,16 @@ contract('manager', async (accounts)  => {
 		});
 
 		it("should allow me to withdraw the pool fees", async () => {
+			await transactTo(this.instance, 0, this.admins[2]);
 			await this.instance.sendTransaction({value: 12345, from: this.investors[2]});
-			adminBalance = web3.eth.getBalance(this.admins[2]).valueOf();
-            let res = await this.instance.collectFees({from: this.admins[2]});
+			adminBalance = web3.eth.getBalance(this.admins[1]).valueOf();
+			await transactTo(this.instance, 2, this.admins[2]);
+            let res = await this.instance.collectFees({from: this.admins[1]});
             gas = res.receipt.gasUsed * 100000000000;
-            newBalance = web3.eth.getBalance(this.admins[2]).valueOf();
+            newBalance = web3.eth.getBalance(this.admins[1]).valueOf();
             assert.equal(newBalance, adminBalance-gas+371);
             let poolFees = await this.instance.poolFees.call();
             assert.equal(poolFees.valueOf(), 0);
-		});
-	});
-
-	context('should do the right calculations for spliting fees and contributions', async () => {
-		it('when fees is 2.5', async () => {
-			let instance = await Manager.new(250);
-			let res = await instance.sendTransaction({value: 4500000000000});
-			let poolContribution = await instance.poolContribution.call();
-			let poolFees = await instance.poolFees.call();
-			assert.equal(poolContribution.valueOf(), 4387500000000);
-			assert.equal(poolFees.valueOf(), 112500000000);
-
-		});
-		it('when fees is 0.2', async () => {
-			let instance = await Manager.new(20);
-			let res = await instance.sendTransaction({value: 337559310000000});
-			let poolContribution = await instance.poolContribution.call();
-			let poolFees = await instance.poolFees.call();
-			assert.equal(poolContribution.valueOf(), 336884191380000);
-			assert.equal(poolFees.valueOf(), 675118620000);
-		});
-		it('when fees is 0', async () => {
-			let instance = await Manager.new(0);
-			let res = await instance.sendTransaction({value: 337559310000000});
-			let poolContribution = await instance.poolContribution.call();
-			let poolFees = await instance.poolFees.call();
-			assert.equal(poolContribution.valueOf(), 337559310000000);
-			assert.equal(poolFees.valueOf(), 0);
-		});
-		it('when fees is 0.25', async () => {
-			let instance = await Manager.new(25);
-			let res = await instance.sendTransaction({value: 337559311234567});
-			let poolContribution = await instance.poolContribution.call();
-			let poolFees = await instance.poolFees.call();
-			assert.equal(poolContribution.valueOf(), 336715412956480);
-			assert.equal(poolFees.valueOf(), 843898278087);
-		});
-		it('when fees is 1.3', async () => {
-			let instance = await Manager.new(130);
-			let res = await instance.sendTransaction({value: 452551390041100000});
-			let poolContribution = await instance.poolContribution.call();
-			let poolFees = await instance.poolFees.call();
-			assert.equal(poolContribution.valueOf(), 446668221970565700);
-			assert.equal(poolFees.valueOf(), 5883168070534300);
-		});
-		it('when fees is 1.4', async () => {
-			let instance = await Manager.new(140);
-			let res = await instance.sendTransaction({value: 4525513900411237});
-			let poolContribution = await instance.poolContribution.call();
-			let poolFees = await instance.poolFees.call();
-			assert.equal(poolContribution.valueOf(), 4462156705805479);
-			assert.equal(poolFees.valueOf(), 63357194605758);
 		});
 	});
 });

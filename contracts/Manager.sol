@@ -15,7 +15,11 @@ contract Manager {
     mapping (address => bool) public isAdmin;
 
     // generals
-    uint256 public poolFeePercentage; // 0.03 * 1000
+    uint256 public state = 0; // initialized on "open"
+        // 0 = open = contribution stage, people can send and withdraw
+        // 1 = closed = waiting stage, we send to ico and wait for tokens; cant withdraw/contribute
+        // 2 = distribution = we got tokens, we are distributing and we can collect fees
+    uint256 public poolFeePercentage; // 0.03 * 10000
     uint256 public poolContribution;
     uint256 public poolFees;
 
@@ -26,6 +30,7 @@ contract Manager {
     event Withdrawed(address _address, uint256 _amount);
     event PoolContributionSent(address _to, uint256 _amount);
     event PoolFeesSent(address _to, uint256 _amount);
+    event StateChanged(uint256 _to);
 
     function Manager(uint256 _poolFeePercentage) public {
         configurePool(_poolFeePercentage); // to be handled on UI, 0.025 = 25 (x 1000)
@@ -39,7 +44,7 @@ contract Manager {
         poolFeePercentage = _poolFeePercentage;
     }
 
-    function setAdmins(address[] _admins) public onlyOwner {
+    function setAdmins(address[] _admins) public whileOpened onlyOwner {
         admins = _admins;
         admins.push(owner);
         for (uint i = 0; i < admins.length; i++) {
@@ -47,11 +52,17 @@ contract Manager {
         }
     }
 
+    // role modifiers
     modifier onlyAdmin { require(isAdmin[msg.sender]); _; }
     modifier onlyOwner { require(msg.sender == owner); _; }
 
+    // state modifiers
+    modifier whileOpened { require(state == 0); _;          }
+    modifier whileClosed { require(state == 1); _;          }
+    modifier whileDistribution { require(state == 2); _;          }
+
     // contributes
-    function () public payable { // default action is contribute
+    function () public payable whileOpened { // default action is contribute
         if (!isContributor[msg.sender]) {
             contributors.push(msg.sender);
         }
@@ -63,9 +74,9 @@ contract Manager {
     }
 
     // withdraws contribution
-    function withdrawContribution() public {
+    function withdrawContribution() public whileOpened {
         uint256 amount = contributions[msg.sender];
-        assert(amount > 0 && amount <= this.balance);
+        assert(amount > 0 && amount <= this.balance && this.balance - amount >= 0);
         uint256 contrib = contributionWithoutFees(amount);
         poolContribution -= contrib;
         poolFees -= amount - contrib;
@@ -75,7 +86,7 @@ contract Manager {
     }
 
     // sends contribution to ICO/presale address
-    function sendContribution(address _to) public onlyAdmin {
+    function sendContribution(address _to) public whileClosed onlyAdmin {
         assert(this.balance >= poolContribution);
         _to.transfer(poolContribution);
         PoolContributionSent(_to, poolContribution);
@@ -83,11 +94,18 @@ contract Manager {
     }
 
     // for admins to collect fees; version 1: one admin gets all fees and shares it manually
-    function collectFees() public onlyAdmin {
+    function collectFees() public whileDistribution onlyAdmin {
         assert(poolFees > 0 && this.balance >= poolFees);
         msg.sender.transfer(poolFees);
         PoolFeesSent(msg.sender, poolFees);
         poolFees = 0; // todo: refactor me
+    }
+
+    function setState(uint256 _to) public onlyAdmin {
+        require(_to != state);
+        require(_to == 0 || _to == 1 || _to == 2); // only supported states by now
+        state = _to;
+        StateChanged(_to);
     }
 
     // calculations
