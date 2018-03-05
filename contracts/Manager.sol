@@ -26,6 +26,9 @@ contract Manager {
     uint256 public individualMinContribution;
     uint256 public individualMaxContribution;
     uint256 public poolMaxContribution;
+    bool public poolContributionSent = false;
+    bool public poolFeesSent = false;
+    mapping (address => bool) public tokensCollected;
     ERC20Interface public tokenContract;
     uint256 public tokenBalance;
 
@@ -104,10 +107,11 @@ contract Manager {
 
     // sends contribution to ICO/presale address
     function sendContribution(address _to) public whileClosed onlyAdmin {
+        assert(poolContributionSent == false);
         assert(this.balance >= poolContribution);
         _to.transfer(poolContribution);
         PoolContributionSent(_to, poolContribution);
-        poolContribution = 0; // todo: refactor me
+        poolContributionSent = true;
     }
 
     // sets token address
@@ -121,18 +125,21 @@ contract Manager {
 
     // each contributor can call this for receiving their tokens
     function collectTokens() public whileDistribution {
+        assert(tokensCollected[msg.sender] == false);
         assert(contributions[msg.sender] > 0);
         uint256 amount = shareOf(msg.sender);
+        tokensCollected[msg.sender] = true;
         tokenContract.transferFrom(this, msg.sender, amount);
         TokensCollected(msg.sender, amount);
     }
 
     // for admins to collect fees; version 1: one admin gets all fees and shares it manually
     function collectFees() public whileDistribution onlyAdmin {
+        assert(poolFeesSent == false);
         assert(poolFees > 0 && this.balance >= poolFees);
         msg.sender.transfer(poolFees);
         PoolFeesSent(msg.sender, poolFees);
-        poolFees = 0; // todo: refactor me
+        poolFeesSent = true;
     }
 
     function setState(uint256 _to) public onlyAdmin {
