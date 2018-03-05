@@ -1,0 +1,25 @@
+{
+  "name": "cryptowise-pool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/carlosero/cryptowise-pool.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/carlosero/cryptowise-pool/issues"
+  },
+  "homepage": "https://github.com/carlosero/cryptowise-pool#readme",
+  "dependencies": {
+    "truffle": "^4.1.0"
+  }
+}
