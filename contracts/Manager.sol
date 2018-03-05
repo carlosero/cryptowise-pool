@@ -25,6 +25,7 @@ contract Manager {
     event Contributed(address _address, uint256 _amount);
     event Withdrawed(address _address, uint256 _amount);
     event PoolContributionSent(address _to, uint256 _amount);
+    event PoolFeesSent(address _to, uint256 _amount);
 
     function Manager(uint256 _poolFeePercentage) public {
         configurePool(_poolFeePercentage); // to be handled on UI, 0.025 = 25 (x 1000)
@@ -78,6 +79,15 @@ contract Manager {
         assert(this.balance >= poolContribution);
         _to.transfer(poolContribution);
         PoolContributionSent(_to, poolContribution);
+        poolContribution = 0; // todo: refactor me
+    }
+
+    // for admins to collect fees; version 1: one admin gets all fees and shares it manually
+    function collectFees() public onlyAdmin {
+        assert(poolFees > 0 && this.balance >= poolFees);
+        msg.sender.transfer(poolFees);
+        PoolFeesSent(msg.sender, poolFees);
+        poolFees = 0; // todo: refactor me
     }
 
     // calculations

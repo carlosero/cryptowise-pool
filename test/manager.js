@@ -95,6 +95,19 @@ contract('manager', async (accounts)  => {
 			let poolContribution = await this.instance.poolContribution.call();
 			await this.instance.sendContribution(icoAddress, {from: this.admins[2]});
 			assert.equal(web3.eth.getBalance(icoAddress).valueOf(), poolContribution.valueOf());
+            poolContribution = await this.instance.poolContribution.call();
+            assert.equal(poolContribution.valueOf(), 0);
+		});
+
+		it("should allow me to withdraw the pool fees", async () => {
+			await this.instance.sendTransaction({value: 12345, from: this.investors[2]});
+			adminBalance = web3.eth.getBalance(this.admins[2]).valueOf();
+            let res = await this.instance.collectFees({from: this.admins[2]});
+            gas = res.receipt.gasUsed * 100000000000;
+            newBalance = web3.eth.getBalance(this.admins[2]).valueOf();
+            assert.equal(newBalance, adminBalance-gas+371);
+            let poolFees = await this.instance.poolFees.call();
+            assert.equal(poolFees.valueOf(), 0);
 		});
 	});
 
