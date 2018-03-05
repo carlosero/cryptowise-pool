@@ -11,16 +11,16 @@ contract('manager base functionality', async (accounts)  => {
 	})
 	context('as contributor', async ()  => {
 		it("should allow me to contribute ether", async ()  => {
-			await this.instance.sendTransaction({ value: 12345, from: this.investors[0] });
+			await this.instance.sendTransaction({ value: 12340000, from: this.investors[0] });
             let balance = await this.instance.contributions.call(this.investors[0]);
-			assert.equal(balance.valueOf(), 12345);
+			assert.equal(balance.valueOf(), 12340000);
 		});
 
 		it("and should calculate my contribution and fees apart", async () => {
 			let poolContribution = await this.instance.poolContribution.call();
 			let poolFees = await this.instance.poolFees.call();
-			assert.equal(poolContribution.valueOf(), 11974);
-			assert.equal(poolFees.valueOf(), 371);
+			assert.equal(poolContribution.valueOf(), 11969800);
+			assert.equal(poolFees.valueOf(), 370200);
 		});
 
 		it("should allow me to withdraw the ether I contributed", async ()  => {
@@ -28,7 +28,7 @@ contract('manager base functionality', async (accounts)  => {
             let res = await this.instance.withdrawContribution({from: this.investors[0]});
             gas = res.receipt.gasUsed * 100000000000;
             newBalance = web3.eth.getBalance(this.investors[0]).valueOf();
-            assert.equal(newBalance, investorBalance-gas+12345)
+            assert.equal(newBalance, investorBalance-gas+12340000)
             let balance = await this.instance.contributions.call(this.investors[0]);
             assert.equal(balance.valueOf(), 0);
 		});
@@ -41,20 +41,20 @@ contract('manager base functionality', async (accounts)  => {
 		});
 
 		it("should allow me to contribute again after withdrawal", async ()  => {
-			await this.instance.sendTransaction({ value: 12345, from: this.investors[0] });
+			await this.instance.sendTransaction({ value: 12340000, from: this.investors[0] });
             let balance = await this.instance.contributions.call(this.investors[0]);
-			assert.equal(balance.valueOf(), 12345);
+			assert.equal(balance.valueOf(), 12340000);
 		});
 
 		it("should allow me to contribute many times and keep the right balances", async ()  => {
-			await this.instance.sendTransaction({ value: 12345, from: this.investors[0] });
-			await this.instance.sendTransaction({ value: 12345, from: this.investors[0] });
+			await this.instance.sendTransaction({ value: 12340000, from: this.investors[0] });
+			await this.instance.sendTransaction({ value: 12340000, from: this.investors[0] });
             let balance = await this.instance.contributions.call(this.investors[0]);
 			let poolContribution = await this.instance.poolContribution.call();
 			let poolFees = await this.instance.poolFees.call();
-			assert.equal(balance.valueOf(), 12345*3);
-			assert.equal(poolContribution.valueOf(), 11974*3);
-			assert.equal(poolFees.valueOf(), 371*3);
+			assert.equal(balance.valueOf(), 12340000*3);
+			assert.equal(poolContribution.valueOf(), 11969800*3);
+			assert.equal(poolFees.valueOf(), 370200*3);
 		});
 
 		it("should not allow me to withdraw more than the ether I sent", async ()  => {
@@ -68,7 +68,7 @@ contract('manager base functionality', async (accounts)  => {
 
 		it("should not allow me to send contribution of pool to X address", async ()  => {
 			let icoAddress = '0x123306090abab3a6e1400e9345bc60c78a8bef57';
-			await this.instance.sendTransaction({value: 12345, from: this.investors[0]});
+			await this.instance.sendTransaction({value: 12340000, from: this.investors[0]});
          	await expectThrow(this.instance.sendContribution(icoAddress, {from: this.investors[0]}), "Error");
 		});
 	});
@@ -97,7 +97,7 @@ contract('manager base functionality', async (accounts)  => {
 		it("should allow me to send contribution of pool to X address", async ()  => {
 			await transactTo(this.instance, 0, this.admins[2]);
 			let icoAddress = '0x123306090abab3a6e1400e9345bc60c78a8bef57';
-			await this.instance.sendTransaction({value: 12345, from: this.investors[2]});
+			await this.instance.sendTransaction({value: 12340000, from: this.investors[2]});
 			let poolContribution = await this.instance.poolContribution.call();
 			await transactTo(this.instance, 1, this.admins[2]);
 			await this.instance.sendContribution(icoAddress, {from: this.admins[2]});
@@ -108,13 +108,13 @@ contract('manager base functionality', async (accounts)  => {
 
 		it("should allow me to withdraw the pool fees", async () => {
 			await transactTo(this.instance, 0, this.admins[2]);
-			await this.instance.sendTransaction({value: 12345, from: this.investors[2]});
+			await this.instance.sendTransaction({value: 12340000, from: this.investors[2]});
 			adminBalance = web3.eth.getBalance(this.admins[1]).valueOf();
 			await transactTo(this.instance, 2, this.admins[2]);
             let res = await this.instance.collectFees({from: this.admins[1]});
             gas = res.receipt.gasUsed * 100000000000;
             newBalance = web3.eth.getBalance(this.admins[1]).valueOf();
-            assert.equal(newBalance, adminBalance-gas+371);
+            assert.equal(newBalance, adminBalance-gas+1110600);
             let poolFees = await this.instance.poolFees.call();
             assert.equal(poolFees.valueOf(), 0);
 		});
@@ -122,7 +122,7 @@ contract('manager base functionality', async (accounts)  => {
 		it("should allow me to move funds between accounts", async () => {
 			let beneficiary = '0x111106090abab3a6e1400e9345bc60c78a8bef57';
 			await transactTo(this.instance, 0, this.admins[2]);
-			await this.instance.sendTransaction({value: 12345, from: this.investors[2]});
+			await this.instance.sendTransaction({value: 12340000, from: this.investors[2]});
 			let initialBalanceInvestor = await this.instance.contributions.call(this.investors[2]);
 			await this.instance.transferTo(this.investors[2], beneficiary, 500);
 			let balanceInvestor = await this.instance.contributions.call(this.investors[2]);
