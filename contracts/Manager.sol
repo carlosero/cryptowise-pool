@@ -37,6 +37,7 @@ contract Manager {
     event PoolContributionSent(address _to, uint256 _amount);
     event PoolFeesSent(address _to, uint256 _amount);
     event StateChanged(uint256 _to);
+    event TokensCollected(address _who, uint256 _amount);
 
     function Manager(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution) public {
         configurePool(_poolFeePercentage, _individualMinContribution, _individualMaxContribution, _poolMaxContribution); // to be handled on UI, 0.025 = 25 (x 1000)
@@ -118,6 +119,14 @@ contract Manager {
         setState(2);
     }
 
+    // each contributor can call this for receiving their tokens
+    function collectTokens() public whileDistribution {
+        assert(contributions[msg.sender] > 0);
+        uint256 amount = shareOf(msg.sender);
+        tokenContract.transferFrom(this, msg.sender, amount);
+        TokensCollected(msg.sender, amount);
+    }
+
     // for admins to collect fees; version 1: one admin gets all fees and shares it manually
     function collectFees() public whileDistribution onlyAdmin {
         assert(poolFees > 0 && this.balance >= poolFees);
@@ -143,5 +152,9 @@ contract Manager {
     // calculations
     function contributionWithoutFees(uint256 amount) internal view returns (uint256) {
         return (PERCENTAGE_MULTIPLIER - poolFeePercentage) * amount / PERCENTAGE_MULTIPLIER;
+    }
+
+    function shareOf(address _contributor) internal view returns (uint256) {
+        contributionWithoutFees(contributions[_contributor]) * tokenBalance / poolContribution
     }
 }
