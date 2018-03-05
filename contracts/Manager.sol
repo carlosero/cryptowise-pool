@@ -20,7 +20,7 @@ contract Manager {
     uint256 public poolFees;
 
     // constants
-    uint256 public PERCENTAGE_MULTIPLIER = 1000;
+    uint256 public PERCENTAGE_MULTIPLIER = 10000;
 
     event Contributed(address _address, uint256 _amount);
     event Withdrawed(address _address, uint256 _amount);
