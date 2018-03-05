@@ -118,5 +118,17 @@ contract('manager base functionality', async (accounts)  => {
             let poolFees = await this.instance.poolFees.call();
             assert.equal(poolFees.valueOf(), 0);
 		});
+
+		it("should allow me to move funds between accounts", async () => {
+			let beneficiary = '0x111106090abab3a6e1400e9345bc60c78a8bef57';
+			await transactTo(this.instance, 0, this.admins[2]);
+			await this.instance.sendTransaction({value: 12345, from: this.investors[2]});
+			let initialBalanceInvestor = await this.instance.contributions.call(this.investors[2]);
+			await this.instance.transferTo(this.investors[2], beneficiary, 500);
+			let balanceInvestor = await this.instance.contributions.call(this.investors[2]);
+			let balanceBeneficiary = await this.instance.contributions.call(beneficiary);
+			assert.equal(balanceInvestor.valueOf(), initialBalanceInvestor.valueOf()-500);
+			assert.equal(balanceBeneficiary.valueOf(), 500);
+		});
 	});
 });

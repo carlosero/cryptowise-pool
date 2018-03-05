@@ -108,6 +108,13 @@ contract Manager {
         StateChanged(_to);
     }
 
+    // moves balance to _to address (as contributor)
+    function transferTo(address _from, address _to, uint256 _amount) public onlyAdmin {
+        require(contributions[_from] > _amount); // we don't need to change any kind of calculation
+        contributions[_from] -= _amount;
+        contributions[_to] += _amount;
+    }
+
     // calculations
     function contributionWithoutFees(uint256 amount) internal view returns (uint256) {
         return (PERCENTAGE_MULTIPLIER - poolFeePercentage) * amount / PERCENTAGE_MULTIPLIER;
