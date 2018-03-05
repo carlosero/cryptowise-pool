@@ -46,8 +46,8 @@ contract('manager base functionality', async (accounts)  => {
 			investorBalance = web3.eth.getBalance(this.investors[0]).valueOf();
             let res = await this.instance.withdrawContribution({from: this.investors[0]});
             gas = res.receipt.gasUsed * 100000000000;
-            newBalance = web3.eth.getBalance(this.investors[0]).valueOf();
-            assert.equal(newBalance, investorBalance-gas+12340000)
+            newBalance = parseInt(web3.eth.getBalance(this.investors[0]).valueOf());
+            assert.approximately(newBalance, investorBalance-gas+12340000, 100000);
             let balance = await this.instance.contributions.call(this.investors[0]);
             assert.equal(balance.valueOf(), 0);
 		});
@@ -132,8 +132,8 @@ contract('manager base functionality', async (accounts)  => {
 			await transactTo(this.instance, 2, this.admins[2]);
             let res = await this.instance.collectFees({from: this.admins[1]});
             gas = res.receipt.gasUsed * 100000000000;
-            newBalance = web3.eth.getBalance(this.admins[1]).valueOf();
-            assert.equal(newBalance, adminBalance-gas+1110600);
+            newBalance = parseInt(web3.eth.getBalance(this.admins[1]).valueOf());
+            assert.approximately(newBalance, adminBalance-gas+1110600, 100000);
             let poolFees = await this.instance.poolFees.call();
             assert.equal(poolFees.valueOf(), 0);
 		});

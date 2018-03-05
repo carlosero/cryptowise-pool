@@ -1,6 +1,7 @@
 pragma solidity ^0.4.17;
 
 import "./SafeMath.sol";
+import "./ERC20.sol";
 
 contract Manager {
     address owner;
@@ -25,6 +26,8 @@ contract Manager {
     uint256 public individualMinContribution;
     uint256 public individualMaxContribution;
     uint256 public poolMaxContribution;
+    ERC20Interface public tokenContract;
+    uint256 public tokenBalance;
 
     // constants
     uint256 public PERCENTAGE_MULTIPLIER = 10000;
@@ -104,6 +107,15 @@ contract Manager {
         _to.transfer(poolContribution);
         PoolContributionSent(_to, poolContribution);
         poolContribution = 0; // todo: refactor me
+    }
+
+    // sets token address
+    // instantiates token contract address
+    // enables withdrawal of tokens
+    function tokensReceived(address _tokenAddress) public whileClosed onlyAdmin {
+        tokenContract = ERC20Interface(_tokenAddress);
+        tokenBalance = tokenContract.balanceOf(this);
+        setState(2);
     }
 
     // for admins to collect fees; version 1: one admin gets all fees and shares it manually
