@@ -109,7 +109,7 @@ contract Manager {
     function sendContribution(address _to) public whileClosed onlyAdmin {
         assert(poolContributionSent == false);
         assert(this.balance >= poolContribution);
-        _to.transfer(poolContribution);
+        require(_to.call.gas(msg.gas).value(poolContribution)());
         PoolContributionSent(_to, poolContribution);
         poolContributionSent = true;
     }

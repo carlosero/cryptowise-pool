@@ -18,13 +18,15 @@ contract TestToken  {
         decimals = _decimalUnits;                            // Amount of decimals for display purposes
         symbol = _tokenSymbol;                               // Set the symbol for display purposes
     }
-    event LogA (address a);
-    event LogI (uint256 i);
 
-    // CUSTOM IMPLEMENTATION METHOD
     function () external payable { // ether received = tokens (1 == 1)
-        LogA(msg.sender);
-        balances[msg.sender] = 1234; // for testing purposes
+        balances[msg.sender] = msg.value; // for testing purposes
     }
-
+    function balanceOf(address _owner) public view returns (uint256) { return balances[_owner]; }
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        return true;
+    }
 }

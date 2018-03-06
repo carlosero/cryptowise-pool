@@ -114,16 +114,11 @@ contract('manager base workflow functionality', async (accounts)  => {
 	context('as admin', async ()  => {
 		it("should allow me to send contribution of pool to X address", async ()  => {
 			let poolContribution = await this.instance.poolContribution.call();
-			console.log(await this.instance.poolContributionSent.call())
-			console.log(await this.instance.poolContribution.call())
 			await transactTo(this.instance, 1, this.admins[2]);
-			console.log(await this.instance.state.call())
-			console.log(this.icoAddress)
-			await this.instance.sendContribution(this.icoAddress, {from: this.admins[2], gas: 999999});
-			console.log("after")
+			await this.instance.sendContribution(this.icoAddress, {from: this.admins[2] });
 			assert.equal(web3.eth.getBalance(this.icoAddress).valueOf(), poolContribution.valueOf());
             poolContributionSent = await this.instance.poolContributionSent.call();
-            assert.equal(poolContributionSent.valueOf(), false);
+            assert.equal(poolContributionSent.valueOf(), true);
 		});
 
 		it("should not allow me to send contribution of pool twice", async () => {
