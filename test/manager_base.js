@@ -1,14 +1,16 @@
 var expectThrow = require('./helpers/expectThrow');
 var transactTo = require('./helpers/transactTo');
 var Manager = artifacts.require("./Manager.sol");
+var TestToken = artifacts.require("./eip20/TestToken.sol");
 
 contract('manager base workflow functionality', async (accounts)  => {
 	beforeEach(async () => {
 		this.instance = await Manager.deployed();
+		this.tokenContract = await TestToken.deployed();
 		this.owner = accounts[0];
 		this.investors = [accounts[1], accounts[2], accounts[3]];
 		this.admins = [accounts[4], accounts[5], accounts[6]];
-		this.icoAddress = '0x123306090abab3a6e1400e9345bc60c78a8bef57';
+		this.icoAddress = this.tokenContract.address;
 	})
 	context('as investor', async ()  => {
 		it("should allow me to contribute ether", async ()  => {
@@ -86,9 +88,8 @@ contract('manager base workflow functionality', async (accounts)  => {
 		});
 
 		it("should not allow me to send contribution of pool to X address", async ()  => {
-			let icoAddress = '0x123306090abab3a6e1400e9345bc60c78a8bef57';
 			await this.instance.sendTransaction({value: 12340000, from: this.investors[0]});
-         	await expectThrow(this.instance.sendContribution(icoAddress, {from: this.investors[0]}), "Error");
+         	await expectThrow(this.instance.sendContribution(this.icoAddress, {from: this.investors[0]}), "Error");
 		});
 
 		it("should not allow me to change pool state", async ()  => {
@@ -113,31 +114,86 @@ contract('manager base workflow functionality', async (accounts)  => {
 	context('as admin', async ()  => {
 		it("should allow me to send contribution of pool to X address", async ()  => {
 			let poolContribution = await this.instance.poolContribution.call();
+			console.log(await this.instance.poolContributionSent.call())
+			console.log(await this.instance.poolContribution.call())
 			await transactTo(this.instance, 1, this.admins[2]);
-			await this.instance.sendContribution(this.icoAddress, {from: this.admins[2]});
+			console.log(await this.instance.state.call())
+			console.log(this.icoAddress)
+			await this.instance.sendContribution(this.icoAddress, {from: this.admins[2], gas: 999999});
+			console.log("after")
 			assert.equal(web3.eth.getBalance(this.icoAddress).valueOf(), poolContribution.valueOf());
             poolContributionSent = await this.instance.poolContributionSent.call();
-            assert.equal(poolContributionSent.valueOf(), true);
+            assert.equal(poolContributionSent.valueOf(), false);
 		});
 
 		it("should not allow me to send contribution of pool twice", async () => {
          	await expectThrow(this.instance.sendContribution(this.icoAddress, {from: this.admins[2]}), "Error");
 		});
 
-		it("should allow me to withdraw the pool fees", async () => {
-			let adminBalance = web3.eth.getBalance(this.admins[1]).valueOf();
-			let poolFees = await this.instance.poolFees.call();
-			await transactTo(this.instance, 2, this.admins[2]);
-            let res = await this.instance.collectFees({from: this.admins[1]});
-            gas = res.receipt.gasUsed * 100000000000;
-            newBalance = parseInt(web3.eth.getBalance(this.admins[1]).valueOf());
-            assert.approximately(newBalance, adminBalance-gas+parseInt(poolFees.valueOf()), 100000);
-            let poolFeesSent = await this.instance.poolFeesSent.call();
-            assert.equal(poolFeesSent.valueOf(), true);
+		it("should not allow me to collect fees without configuring token contract", async () => {
+         	await expectThrow(this.instance.collectFees({from: this.admins[1]}), "Error");
 		});
 
-		it("should not allow me to withdraw pool fees twice", async () => {
-         	await expectThrow(this.instance.collectFees({from: this.admins[1]}), "Error");
+		it("should allow me to configure token contract", async () => {
+			await this.instance.tokensReceived(this.icoAddress, {from: this.admins[1]});
+		});
+	});
+
+	context("after configuring token", async () => {
+		it("state should be distribution", async () => {
+			let state = await this.instance.state.call();
+			assert.equal(state.valueOf(), 2);
+		});
+
+		it("should know its tokens balance", async () => {
+			// for this test, token gives balance in a ratio 1 wei == 1 token
+			let poolContribution = await this.instance.poolContribution.call();
+			let tokenBalance = await this.instance.tokenBalance.call();
+			let contractBalance = await this.tokenContract.balanceOf(this.instance.address);
+			assert.equal(poolContribution.valueOf(), tokenBalance.valueOf());
+			assert.equal(poolContribution.valueOf(), contractBalance.valueOf());
+		});
+
+		context("as admin", async () => {
+			it("should allow me to withdraw the pool fees", async () => {
+				let adminBalance = web3.eth.getBalance(this.admins[1]).valueOf();
+				let poolFees = await this.instance.poolFees.call();
+	            let res = await this.instance.collectFees({from: this.admins[1]});
+	            gas = res.receipt.gasUsed * 100000000000;
+	            newBalance = parseInt(web3.eth.getBalance(this.admins[1]).valueOf());
+	            assert.approximately(newBalance, adminBalance-gas+parseInt(poolFees.valueOf()), 100000);
+	            let poolFeesSent = await this.instance.poolFeesSent.call();
+	            assert.equal(poolFeesSent.valueOf(), true);
+			});
+
+			it("should not allow me to withdraw pool fees twice", async () => {
+	         	await expectThrow(this.instance.collectFees({from: this.admins[1]}), "Error");
+			});
+		});
+
+		context("as investor", async () => {
+			it("should allow me to withdraw my tokens", async () => {
+				await this.instance.collectTokens({from: this.investors[0]});
+				await this.instance.collectTokens({from: this.investors[1]});
+				await this.instance.collectTokens({from: this.investors[2]});
+				let balance0 = await this.tokenContract.balanceOf.call(this.investors[0]);
+				let balance1 = await this.tokenContract.balanceOf.call(this.investors[1]);
+				let balance2 = await this.tokenContract.balanceOf.call(this.investors[2]);
+				let contractTokenBalance = this.tokenContract.balanceOf.call(this.instance.address);
+				assert.equal(balance0.valueOf(), 12340000*2*0.97); // see tests from above
+				assert.equal(balance1.valueOf(), 500*0.97);
+				assert.equal(balance2.valueOf(), (12340000-500)*0.97);
+				assert.equal(contractTokenBalance.valueOf(), 0); // after sending all contribution this should be 0
+			});
+
+			it("should not allow me to withdraw after I already did withdraw", async () => {
+	         	await expectThrow(this.instance.collectTokens({from: this.investors[0]}), "Error");
+			});
+
+			it("should allow withdrawal only from real investors", async () => {
+	         	await expectThrow(this.instance.collectTokens({from: this.admins[1]}), "Error");
+			});
 		});
 	});
 });
+

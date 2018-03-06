@@ -1,7 +1,7 @@
 pragma solidity ^0.4.17;
 
 import "./SafeMath.sol";
-import "./ERC20.sol";
+import "./eip20/EIP20Interface.sol";
 
 contract Manager {
     address owner;
@@ -29,7 +29,7 @@ contract Manager {
     bool public poolContributionSent = false;
     bool public poolFeesSent = false;
     mapping (address => bool) public tokensCollected;
-    ERC20Interface public tokenContract;
+    EIP20Interface public tokenContract;
     uint256 public tokenBalance;
 
     // constants
@@ -118,7 +118,7 @@ contract Manager {
     // instantiates token contract address
     // enables withdrawal of tokens
     function tokensReceived(address _tokenAddress) public whileClosed onlyAdmin {
-        tokenContract = ERC20Interface(_tokenAddress);
+        tokenContract = EIP20Interface(_tokenAddress);
         tokenBalance = tokenContract.balanceOf(this);
         setState(2);
     }
@@ -129,7 +129,7 @@ contract Manager {
         assert(contributions[msg.sender] > 0);
         uint256 amount = shareOf(msg.sender);
         tokensCollected[msg.sender] = true;
-        tokenContract.transferFrom(this, msg.sender, amount);
+        tokenContract.transfer(msg.sender, amount);
         TokensCollected(msg.sender, amount);
     }
 
