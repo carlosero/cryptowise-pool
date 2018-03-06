@@ -13,7 +13,6 @@ contract TestToken  {
         uint256 _decimalUnits,
         string _tokenSymbol
     ) public {
-        owner = msg.sender;
         balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
         name = _tokenName;                                   // Set the name for display purposes
         decimals = _decimalUnits;                            // Amount of decimals for display purposes
@@ -24,9 +23,8 @@ contract TestToken  {
 
     // CUSTOM IMPLEMENTATION METHOD
     function () external payable { // ether received = tokens (1 == 1)
-        // maldicion = msg.value;
         LogA(msg.sender);
-        // balances[msg.sender] = 1234; // for testing purposes
+        balances[msg.sender] = 1234; // for testing purposes
     }
 
 }
