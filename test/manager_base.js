@@ -144,7 +144,7 @@ contract('manager base workflow functionality', async (accounts)  => {
 			// for this test, token gives balance in a ratio 1 wei == 1 token
 			let poolContribution = await this.instance.poolContribution.call();
 			let tokenBalance = await this.instance.tokenBalance.call();
-			let contractBalance = await this.tokenContract.balanceOf(this.instance.address);
+			let contractBalance = await this.tokenContract.balanceOf.call(this.instance.address);
 			assert.equal(poolContribution.valueOf(), tokenBalance.valueOf());
 			assert.equal(poolContribution.valueOf(), contractBalance.valueOf());
 		});
@@ -172,8 +172,8 @@ contract('manager base workflow functionality', async (accounts)  => {
 				await this.instance.collectTokens({from: this.investors[1]});
 				let balance0 = await this.tokenContract.balanceOf.call(this.investors[0]);
 				let balance1 = await this.tokenContract.balanceOf.call(this.investors[1]);
-				let contractTokenBalance = this.tokenContract.balanceOf.call(this.instance.address);
-				assert.equal(balance0.valueOf(), 12340000*2*0.97); // see tests from above
+				let contractTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
+				assert.equal(balance0.valueOf(), 12340000*0.97); // see tests from above
 				assert.equal(balance1.valueOf(), 500*0.97);
 				assert.equal(contractTokenBalance.valueOf(), 0); // after sending all contribution this should be 0
 			});
