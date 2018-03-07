@@ -20,6 +20,8 @@
   },
   "homepage": "https://github.com/carlosero/cryptowise-pool#readme",
   "dependencies": {
-    "truffle": "^4.1.0"
+    "solc": "^0.4.20",
+    "truffle": "^4.1.0",
+    "web3": "^1.0.0-beta.30"
   }
 }
