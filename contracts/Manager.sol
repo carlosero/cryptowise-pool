@@ -80,18 +80,22 @@ contract Manager {
     modifier whileDistribution { require(state == 2); _; }
 
     // contributes
-    function () public payable whileOpened { // default action is contribute
-        require(individualMinContribution == 0 || msg.value >= individualMinContribution);
-        require(individualMaxContribution == 0 || msg.value <= individualMaxContribution);
-        uint256 contrib = contributionWithoutFees(msg.value);
+    function () public payable whileOpened {
+        deposit(msg.sender, msg.value);
+    }
+
+    function deposit(address _owner, uint256 _amount) internal { // default action is contribute
+        require(individualMinContribution == 0 || _amount >= individualMinContribution);
+        require(individualMaxContribution == 0 || _amount <= individualMaxContribution);
+        uint256 contrib = contributionWithoutFees(_amount);
         require(poolMaxContribution == 0 || (poolContribution + contrib) <= poolMaxContribution);
-        if (!isContributor[msg.sender]) {
-            contributors.push(msg.sender);
+        if (!isContributor[_owner]) {
+            contributors.push(_owner);
         }
-        contributions[msg.sender] += msg.value;
+        contributions[_owner] += _amount;
         poolContribution += contrib;
-        poolFees += (msg.value - contrib);
-        Contributed(msg.sender, msg.value);
+        poolFees += (_amount - contrib);
+        Contributed(_owner, _amount);
     }
 
     // withdraws contribution
