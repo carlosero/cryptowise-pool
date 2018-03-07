@@ -1,7 +1,7 @@
 var expectThrow = require('./helpers/expectThrow');
 var transactTo = require('./helpers/transactTo');
 var Manager = artifacts.require("./Manager.sol");
-var TestToken = artifacts.require("./eip20/TestToken.sol");
+var TestToken = artifacts.require("./TestToken.sol");
 
 contract('manager base workflow functionality', async (accounts)  => {
 	beforeEach(async () => {

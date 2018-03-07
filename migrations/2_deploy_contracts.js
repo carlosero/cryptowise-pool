@@ -1,5 +1,5 @@
 var Manager = artifacts.require("./Manager.sol");
-var TestToken = artifacts.require('./eip20/TestToken.sol');
+var TestToken = artifacts.require('./TestToken.sol');
 
 module.exports = function(deployer) {
   deployer.deploy(Manager, 300, 0, 0, 0); // 30 = 3.0

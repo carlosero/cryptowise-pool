@@ -1,7 +1,9 @@
 pragma solidity ^0.4.17;
 
-import "./SafeMath.sol";
-import "./eip20/EIP20Interface.sol";
+contract EIP20Interface {
+    function balanceOf(address _owner) public view returns (uint256 balance);
+    function transfer(address _to, uint256 _value) public returns (bool success);
+}
 
 contract Manager {
     address owner;
