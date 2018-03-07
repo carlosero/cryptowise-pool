@@ -80,11 +80,17 @@ contract Manager {
     modifier whileDistribution { require(state == 2); _; }
 
     // contributes
-    function () public payable whileOpened {
-        deposit(msg.sender, msg.value);
+    function () public payable {
+        require(state == 0 || state == 2);
+        if (state == 0) {
+            deposit(msg.sender, msg.value);
+        }
+        if (state == 2) {
+            collectTokens(msg.sender);
+        }
     }
 
-    function deposit(address _owner, uint256 _amount) internal { // default action is contribute
+    function deposit(address _owner, uint256 _amount) internal whileOpened { // default action is contribute
         require(individualMinContribution == 0 || _amount >= individualMinContribution);
         require(individualMaxContribution == 0 || _amount <= individualMaxContribution);
         uint256 contrib = contributionWithoutFees(_amount);
@@ -129,13 +135,14 @@ contract Manager {
     }
 
     // each contributor can call this for receiving their tokens
-    function collectTokens() public whileDistribution {
-        assert(tokensCollected[msg.sender] == false);
-        assert(contributions[msg.sender] > 0);
-        uint256 amount = shareOf(msg.sender);
-        tokensCollected[msg.sender] = true;
-        tokenContract.transfer(msg.sender, amount);
-        TokensCollected(msg.sender, amount);
+    function collectTokens(address _owner) public whileDistribution {
+        require(_owner == msg.sender || isAdmin[msg.sender]); // make it only user can withdraw or admin can trigger this
+        assert(tokensCollected[_owner] == false);
+        assert(contributions[_owner] > 0);
+        uint256 amount = shareOf(_owner);
+        tokensCollected[_owner] = true;
+        tokenContract.transfer(_owner, amount);
+        TokensCollected(_owner, amount);
     }
 
     // for admins to collect fees; version 1: one admin gets all fees and shares it manually

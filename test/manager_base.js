@@ -22,7 +22,7 @@ contract('manager base workflow functionality', async (accounts)  => {
 
 	context('as investor', async ()  => {
 		it("should allow me to contribute ether", async ()  => {
-			await this.instance.sendTransaction({ value: 12340000, from: this.investors[0] });
+			let res = await this.instance.sendTransaction({ value: 12340000, from: this.investors[0] });
             let balance = await this.instance.contributions.call(this.investors[0]);
 			assert.equal(balance.valueOf(), 12340000);
 		});
@@ -159,26 +159,32 @@ contract('manager base workflow functionality', async (accounts)  => {
 
 		context("as investor", async () => {
 			it("should allow me to withdraw my tokens", async () => {
-				await this.instance.collectTokens({from: this.investors[0]});
-				await this.instance.collectTokens({from: this.investors[1]});
+				let initialTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
+				await this.instance.sendTransaction({ value: 0, from: this.investors[0] });
 				let balance0 = await this.tokenContract.balanceOf.call(this.investors[0]);
-				let balance1 = await this.tokenContract.balanceOf.call(this.investors[1]);
 				let contractTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
 				assert.equal(balance0.valueOf(), 12340000*0.97); // see tests from above
+				assert.equal(contractTokenBalance.valueOf(), initialTokenBalance - (12340000*0.97)); // after sending all contribution this should be 0
+			});
+
+			it("should allow an admin to send me my tokens", async () => {
+				await this.instance.collectTokens(this.investors[1], { value: 0, from: this.admins[1] });
+				let balance1 = await this.tokenContract.balanceOf.call(this.investors[1]);
+				let contractTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
 				assert.equal(balance1.valueOf(), 500*0.97);
-				assert.equal(contractTokenBalance.valueOf(), 0); // after sending all contribution this should be 0
+				assert.equal(contractTokenBalance.valueOf(), 0);
 			});
 
 			it("should not allow me to withdraw after I already did withdraw", async () => {
-	         	await expectThrow(this.instance.collectTokens({from: this.investors[0]}), "Error");
+	         	await expectThrow(this.instance.sendTransaction({ value: 0, from: this.investors[0] }), "Error");
 			});
 
 			it("should not allow me withdraw after I withdrew my contribution before", async () => {
-	         	await expectThrow(this.instance.collectTokens({from: this.investors[2]}), "Error");
+	         	await expectThrow(this.instance.sendTransaction({ value: 0, from: this.investors[2] }), "Error");
 			});
 
 			it("should allow withdrawal only from real investors", async () => {
-	         	await expectThrow(this.instance.collectTokens({from: this.admins[1]}), "Error");
+	         	await expectThrow(this.instance.sendTransaction({ value: 0, from: this.admins[1] }), "Error");
 			});
 		});
 	});
