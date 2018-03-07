@@ -190,13 +190,13 @@ contract('manager base workflow functionality', async (accounts)  => {
 
 		context('as admin', async () => {
 			it("should allow me to trigger a second airdrop of tokens", async () => {
-				
+
 			});
 		});
 
 		context("as investor", async () => {
 			it("should allow me to claim my share of the second airdrop", async () => {
-				
+
 			});
 		});
 	});
