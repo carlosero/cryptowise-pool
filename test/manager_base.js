@@ -187,6 +187,17 @@ contract('manager base workflow functionality', async (accounts)  => {
 	         	await expectThrow(this.instance.sendTransaction({ value: 0, from: this.admins[1] }), "Error");
 			});
 		});
+
+		context('as admin', async () => {
+			it("should allow me to trigger a second airdrop of tokens", async () => {
+				
+			});
+		});
+
+		context("as investor", async () => {
+			it("should allow me to claim my share of the second airdrop", async () => {
+				
+			});
+		});
 	});
 });
-
