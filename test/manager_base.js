@@ -12,12 +12,21 @@ contract('manager base workflow functionality', async (accounts)  => {
 		this.admins = [accounts[4], accounts[5], accounts[6]];
 		this.icoAddress = this.tokenContract.address;
 	})
+
+	context('as the owner', async ()  => {
+		it('should set myself as admin when I set admins', async ()  => {
+			assert.equal(await this.instance.admins.call(this.admins.length), this.owner);
+			assert.equal(await this.instance.isAdmin.call(this.owner), true);
+		});
+	});
+
 	context('as investor', async ()  => {
 		it("should allow me to contribute ether", async ()  => {
 			await this.instance.sendTransaction({ value: 12340000, from: this.investors[0] });
             let balance = await this.instance.contributions.call(this.investors[0]);
 			assert.equal(balance.valueOf(), 12340000);
 		});
+
 		it("and should calculate my contribution and fees apart", async () => {
 			let poolContribution = await this.instance.poolContribution.call();
 			let poolFees = await this.instance.poolFees.call();
@@ -83,10 +92,6 @@ contract('manager base workflow functionality', async (accounts)  => {
             await this.instance.withdrawContribution({from: this.investors[2]});
 		});
 
-		it("should not allow me to modify admins", async ()  => {
-         	await expectThrow(this.instance.setAdmins(this.admins, {from: this.investors[0]}), "Error");
-		});
-
 		it("should not allow me to send contribution of pool to X address", async ()  => {
 			await this.instance.sendTransaction({value: 12340000, from: this.investors[0]});
          	await expectThrow(this.instance.sendContribution(this.icoAddress, {from: this.investors[0]}), "Error");
@@ -94,20 +99,6 @@ contract('manager base workflow functionality', async (accounts)  => {
 
 		it("should not allow me to change pool state", async ()  => {
          	await expectThrow(transactTo(this.instance, 1, this.investors[0]), "Error");
-		});
-	});
-
-	context('as the owner', async ()  => {
-		it('should allow me to setup admins', async ()  => {
-			await this.instance.setAdmins(this.admins, {from: this.owner});
-			for (i = 0; i < this.admins.length; i++) {
-				assert.equal(await this.instance.admins.call(i), this.admins[i]);
-			}
-		});
-
-		it('should set myself as admin when I set admins', async ()  => {
-			assert.equal(await this.instance.admins.call(this.admins.length), this.owner);
-			assert.equal(await this.instance.isAdmin.call(this.owner), true);
 		});
 	});
 

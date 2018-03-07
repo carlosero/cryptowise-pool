@@ -44,26 +44,25 @@ contract Manager {
     event StateChanged(uint256 _to);
     event TokensCollected(address _who, uint256 _amount);
 
-    function Manager(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution) public {
-        configurePool(_poolFeePercentage, _individualMinContribution, _individualMaxContribution, _poolMaxContribution); // to be handled on UI, 0.025 = 25 (x 1000)
+    function Manager(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution, address[] _admins) public {
         owner = msg.sender;
-        isAdmin[msg.sender] = true;
-        admins.push(msg.sender);
+        configurePool(_poolFeePercentage, _individualMinContribution, _individualMaxContribution, _poolMaxContribution, _admins); // to be handled on UI, 0.025 = 25 (x 1000)
     }
 
-    function configurePool(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution) internal {
+    function configurePool(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution, address[] _admins) internal {
         require(_poolFeePercentage >= 0 && _poolFeePercentage <= PERCENTAGE_MULTIPLIER);
         require(_individualMinContribution >= 0);
         require(_poolMaxContribution == 0 || _individualMinContribution <= _poolMaxContribution);
         require(_individualMaxContribution >= 0);
         require(_poolMaxContribution == 0 || _individualMaxContribution <= _poolMaxContribution);
+        setAdmins(_admins);
         poolFeePercentage = _poolFeePercentage;
         individualMinContribution = _individualMinContribution;
         individualMaxContribution = _individualMaxContribution;
         poolMaxContribution = _poolMaxContribution;
     }
 
-    function setAdmins(address[] _admins) public whileOpened onlyOwner {
+    function setAdmins(address[] _admins) internal {
         admins = _admins;
         admins.push(owner);
         for (uint i = 0; i < admins.length; i++) {
