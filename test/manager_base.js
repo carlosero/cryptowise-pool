@@ -28,8 +28,10 @@ contract('manager base workflow functionality', async (accounts)  => {
 		});
 
 		it("and should calculate my contribution and fees apart", async () => {
+			let entireContribution = await this.instance.entireContribution.call();
 			let poolContribution = await this.instance.poolContribution.call();
 			let poolFees = await this.instance.poolFees.call();
+			assert.equal(entireContribution.valueOf(), 12340000);
 			assert.equal(poolContribution.valueOf(), 11969800);
 			assert.equal(poolFees.valueOf(), 370200);
 		});
@@ -45,8 +47,10 @@ contract('manager base workflow functionality', async (accounts)  => {
 		});
 
 		it("and should re-calculate pool contribution and fees", async () => {
+			let entireContribution = await this.instance.entireContribution.call();
 			let poolContribution = await this.instance.poolContribution.call();
 			let poolFees = await this.instance.poolFees.call();
+			assert.equal(entireContribution.valueOf(), 0);
 			assert.equal(poolContribution.valueOf(), 0);
 			assert.equal(poolFees.valueOf(), 0);
 		});
@@ -62,10 +66,12 @@ contract('manager base workflow functionality', async (accounts)  => {
 			await this.instance.sendTransaction({ value: 12340000, from: this.investors[2] });
             let balance_one = await this.instance.contributions.call(this.investors[0]);
             let balance_two = await this.instance.contributions.call(this.investors[2]);
+			let entireContribution = await this.instance.entireContribution.call();
 			let poolContribution = await this.instance.poolContribution.call();
 			let poolFees = await this.instance.poolFees.call();
 			assert.equal(balance_one.valueOf(), 12340000*2);
 			assert.equal(balance_two.valueOf(), 12340000);
+			assert.equal(entireContribution.valueOf(), 12340000*3);
 			assert.equal(poolContribution.valueOf(), 11969800*3);
 			assert.equal(poolFees.valueOf(), 370200*3);
 		});

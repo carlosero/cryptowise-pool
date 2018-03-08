@@ -25,6 +25,7 @@ contract Manager {
     uint256 public poolFeePercentage; // 0.03 * 10000
     uint256 public poolContribution;
     uint256 public poolFees;
+    uint256 public entireContribution; // sum of poolContribution + poolFees, amount for when feesInTokens==true
     uint256 public individualMinContribution;
     uint256 public individualMaxContribution;
     uint256 public poolMaxContribution;
@@ -103,6 +104,7 @@ contract Manager {
             contributors.push(_owner);
         }
         contributions[_owner] += _amount;
+        entireContribution += _amount;
         poolContribution += contrib;
         poolFees += (_amount - contrib);
         Contributed(_owner, _amount);
@@ -113,6 +115,7 @@ contract Manager {
         uint256 amount = contributions[msg.sender];
         assert(amount > 0 && amount <= this.balance && this.balance - amount >= 0);
         uint256 contrib = contributionWithoutFees(amount, msg.sender);
+        entireContribution -= amount;
         poolContribution -= contrib;
         poolFees -= amount - contrib;
         contributions[msg.sender] = 0;
@@ -123,9 +126,10 @@ contract Manager {
     // sends contribution to ICO/presale address
     function sendContribution(address _to) public whileClosed onlyAdmin {
         assert(poolContributionSent == false);
-        assert(this.balance >= poolContribution);
-        require(_to.call.gas(msg.gas).value(poolContribution)());
-        PoolContributionSent(_to, poolContribution);
+        uint256 _contribution = feesInTokens ? entireContribution : poolContribution;
+        assert(this.balance >= _contribution);
+        require(_to.call.gas(msg.gas).value(_contribution)());
+        PoolContributionSent(_to, _contribution);
         poolContributionSent = true;
     }
 
@@ -152,8 +156,15 @@ contract Manager {
     // for admins to collect fees; version 1: one admin gets all fees and shares it manually
     function collectFees() public whileDistribution onlyAdmin {
         assert(poolFeesSent == false);
-        assert(poolFees > 0 && this.balance >= poolFees);
-        msg.sender.transfer(poolFees);
+        assert(poolFees > 0);
+        assert(!feesInTokens || this.balance >= poolFees);
+        uint256 _poolFeesInTokensAmount = poolFeesInTokensAmount();
+        assert(feesInTokens || tokenBalance >= _poolFeesInTokensAmount);
+        if (feesInTokens) {
+            tokenContract.transfer(msg.sender, _poolFeesInTokensAmount);
+        } else {
+            msg.sender.transfer(poolFees);
+        }
         PoolFeesSent(msg.sender, poolFees);
         poolFeesSent = true;
     }
@@ -175,20 +186,21 @@ contract Manager {
 
     // calculations
     function contributionWithoutFees(uint256 _amount, address _investor) internal view returns (uint256) {
-        if (feesInTokens || poolFeePercentage == 0 || (isAdmin[_investor] && !adminsPaysFees)) {
-            return _amount;
-        }
-        return percentageOfContribution(_amount, _investor);
-    }
-
-    function percentageOfContribution(uint256 _amount, address _investor) internal view returns (uint256) {
         if (poolFeePercentage == 0 || (isAdmin[_investor] && !adminsPaysFees)) {
             return _amount;
         }
+        return contributionPercentageOf(_amount);
+    }
+
+    function contributionPercentageOf(uint256 _amount) internal view returns (uint256) {
         return (PERCENTAGE_MULTIPLIER - poolFeePercentage) * _amount / PERCENTAGE_MULTIPLIER;
     }
 
     function shareOf(address _contributor) internal view returns (uint256) {
-        return percentageOfContribution(contributions[_contributor], _contributor) * tokenBalance / poolContribution;
+        return contributionWithoutFees(contributions[_contributor], _contributor) * tokenBalance / poolContribution;
+    }
+
+    function poolFeesInTokensAmount() internal view returns (uint256) {
+        return tokenBalance - contributionPercentageOf(tokenBalance);
     }
 }
