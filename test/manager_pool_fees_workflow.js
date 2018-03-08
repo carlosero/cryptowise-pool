@@ -238,19 +238,16 @@ contract('manager with fees are paid in tokens and admins pay fees workflow', as
 
       it("should allow me to withdraw my tokens so I end up with poolFees+mytokens", async () => {
         let initialAdminTokens = (await this.tokenContract.balanceOf.call(this.admins[1])).valueOf();
+        let initialContractTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
+        initialContractTokenBalance = parseInt(initialContractTokenBalance.valueOf());
         initialAdminTokens = parseInt(initialAdminTokens);
-        console.log("here initialAdminTokens is", initialAdminTokens)
         await this.instance.sendTransaction({ value: 0, from: this.admins[1] });
-        let newInitialAdminTokens = await this.tokenContract.balanceOf.call(this.admins[1]);
-        console.log("newInitialAdminTokens is", newInitialAdminTokens)
+        let newAdminTokens = await this.tokenContract.balanceOf.call(this.admins[1]);
         let contractTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
-        console.log("contractTokenBalance is", contractTokenBalance)
         let poolFees = (await this.instance.poolFees.call()).valueOf();
-        console.log("poolFees is", poolFees)
         poolFees = parseInt(poolFees);
-
-        assert.equal(newInitialAdminTokens.valueOf(), (12340000*0.97) + poolFees); // admins[1] also withdrew poolFees
-        assert.equal(contractTokenBalance.valueOf(), initialAdminTokens - (12340000*0.97));
+        assert.equal(newAdminTokens.valueOf(), (12340000*0.97) + poolFees); // admins[1] also withdrew poolFees
+        assert.equal(contractTokenBalance.valueOf(), initialContractTokenBalance - (12340000*0.97));
       });
     });
     context("as investor", async () => {
@@ -266,7 +263,6 @@ contract('manager with fees are paid in tokens and admins pay fees workflow', as
       });
     });
   });
-
 });
 contract('manager with fees are paid in tokens and admins dont pay fees workflow', async (accounts)  => {
   before(async () => {

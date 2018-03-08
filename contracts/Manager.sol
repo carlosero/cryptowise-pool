@@ -194,12 +194,11 @@ contract Manager {
     }
 
     function contributionPercentageOf(uint256 _amount) internal view returns (uint256) {
-        // TODO: problem is here in calculations
         return (PERCENTAGE_MULTIPLIER - poolFeePercentage) * _amount / PERCENTAGE_MULTIPLIER;
     }
 
     function shareOf(address _contributor) internal view returns (uint256) {
-        return contributionWithoutFees(contributions[_contributor], _contributor) * tokenBalance / poolContribution;
+        return contributionWithoutFees(contributions[_contributor], _contributor) * tokenBalance / (feesInTokens ? entireContribution : poolContribution);
     }
 
     function poolFeesInTokensAmount() internal view returns (uint256) {
