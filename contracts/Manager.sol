@@ -157,9 +157,9 @@ contract Manager {
     function collectFees() public whileDistribution onlyAdmin {
         assert(poolFeesSent == false);
         assert(poolFees > 0);
-        assert(!feesInTokens || this.balance >= poolFees);
+        assert(feesInTokens || this.balance >= poolFees);
         uint256 _poolFeesInTokensAmount = poolFeesInTokensAmount();
-        assert(feesInTokens || tokenBalance >= _poolFeesInTokensAmount);
+        assert(!feesInTokens || tokenBalance >= _poolFeesInTokensAmount);
         if (feesInTokens) {
             tokenContract.transfer(msg.sender, _poolFeesInTokensAmount);
         } else {
@@ -186,6 +186,7 @@ contract Manager {
 
     // calculations
     function contributionWithoutFees(uint256 _amount, address _investor) internal view returns (uint256) {
+        // TODO: problem is here in calculations
         if (poolFeePercentage == 0 || (isAdmin[_investor] && !adminsPaysFees)) {
             return _amount;
         }
@@ -193,6 +194,7 @@ contract Manager {
     }
 
     function contributionPercentageOf(uint256 _amount) internal view returns (uint256) {
+        // TODO: problem is here in calculations
         return (PERCENTAGE_MULTIPLIER - poolFeePercentage) * _amount / PERCENTAGE_MULTIPLIER;
     }
 

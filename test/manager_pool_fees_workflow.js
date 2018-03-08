@@ -226,34 +226,41 @@ contract('manager with fees are paid in tokens and admins pay fees workflow', as
     context("as admin", async () => {
       it("should allow me to withdraw the pool fees as tokens", async () => {
         let adminBalance = await this.tokenContract.balanceOf.call(this.admins[1]).valueOf();
-        console.log("token admin balance:", adminBalance)
+        assert.equal(adminBalance.valueOf(), 0);
         let poolFees = await this.instance.poolFees.call();
-        console.log("poolFees:", adminBalance)
+        poolFessInTokens = parseInt(poolFees.valueOf());
         await this.instance.collectFees({from: this.admins[1]});
         let newBalance = await this.tokenContract.balanceOf.call(this.admins[1]).valueOf();
-        assert.equal(adminBalance, newBalance);
-        assert.equal(poolFees, newBalance);
+        assert.equal(newBalance.valueOf(), poolFessInTokens);
         let poolFeesSent = await this.instance.poolFeesSent.call();
         assert.equal(poolFeesSent.valueOf(), true);
       });
 
       it("should allow me to withdraw my tokens so I end up with poolFees+mytokens", async () => {
-        let initialTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
+        let initialAdminTokens = (await this.tokenContract.balanceOf.call(this.admins[1])).valueOf();
+        initialAdminTokens = parseInt(initialAdminTokens);
+        console.log("here initialAdminTokens is", initialAdminTokens)
         await this.instance.sendTransaction({ value: 0, from: this.admins[1] });
-        let balance0 = await this.tokenContract.balanceOf.call(this.admins[1]);
+        let newInitialAdminTokens = await this.tokenContract.balanceOf.call(this.admins[1]);
+        console.log("newInitialAdminTokens is", newInitialAdminTokens)
         let contractTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
-        let poolFees = await this.instance.poolFees.call();
-        assert.equal(balance0.valueOf(), (12340000*0.97) + poolFees); // admins[1] also withdrew poolFees
-        assert.equal(contractTokenBalance.valueOf(), initialTokenBalance - (12340000*0.97));
+        console.log("contractTokenBalance is", contractTokenBalance)
+        let poolFees = (await this.instance.poolFees.call()).valueOf();
+        console.log("poolFees is", poolFees)
+        poolFees = parseInt(poolFees);
+
+        assert.equal(newInitialAdminTokens.valueOf(), (12340000*0.97) + poolFees); // admins[1] also withdrew poolFees
+        assert.equal(contractTokenBalance.valueOf(), initialAdminTokens - (12340000*0.97));
       });
     });
     context("as investor", async () => {
       it("should allow me to withdraw my tokens", async () => {
-        let initialTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
+        let initialTokenBalance = (await this.tokenContract.balanceOf.call(this.instance.address)).valueOf();
+        initialTokenBalance = parseInt(initialTokenBalance);
         await this.instance.sendTransaction({ value: 0, from: this.investors[0] });
-        let balance0 = await this.tokenContract.balanceOf.call(this.investors[0]);
+        let balanceWithTokens = await this.tokenContract.balanceOf.call(this.investors[0]);
         let contractTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
-        assert.equal(balance0.valueOf(), 12340000*0.97); // see tests from above
+        assert.equal(balanceWithTokens.valueOf(), 12340000*0.97); // see tests from above
         assert.equal(contractTokenBalance.valueOf(), initialTokenBalance - (12340000*0.97)); // after sending all contribution this should be 0
         assert.equal(contractTokenBalance.valueOf(), 0); // after sending all contribution this should be 0
       });
