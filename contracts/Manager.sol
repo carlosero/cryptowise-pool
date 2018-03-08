@@ -34,6 +34,7 @@ contract Manager {
     EIP20Interface public tokenContract;
     uint256 public tokenBalance;
     bool public adminsPaysFees; // wether admins contribute full amount or need to pay fees
+    bool public feesInTokens; // wether fees are collected in tokens or in ETH
 
     // constants
     uint256 public PERCENTAGE_MULTIPLIER = 10000;
@@ -45,12 +46,12 @@ contract Manager {
     event StateChanged(uint256 _to);
     event TokensCollected(address _who, uint256 _amount);
 
-    function Manager(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution, bool _adminsPaysFees, address[] _admins) public {
+    function Manager(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution, bool _feesInTokens, bool _adminsPaysFees, address[] _admins) public {
         owner = msg.sender;
-        configurePool(_poolFeePercentage, _individualMinContribution, _individualMaxContribution, _poolMaxContribution, _adminsPaysFees, _admins); // to be handled on UI, 0.025 = 25 (x 1000)
+        configurePool(_poolFeePercentage, _individualMinContribution, _individualMaxContribution, _poolMaxContribution, _feesInTokens, _adminsPaysFees, _admins); // to be handled on UI, 0.025 = 25 (x 1000)
     }
 
-    function configurePool(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution, bool _adminsPaysFees, address[] _admins) internal {
+    function configurePool(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution, bool _feesInTokens, bool _adminsPaysFees, address[] _admins) internal {
         require(_poolFeePercentage >= 0 && _poolFeePercentage <= PERCENTAGE_MULTIPLIER);
         require(_individualMinContribution >= 0);
         require(_poolMaxContribution == 0 || _individualMinContribution <= _poolMaxContribution);
@@ -58,6 +59,7 @@ contract Manager {
         require(_poolMaxContribution == 0 || _individualMaxContribution <= _poolMaxContribution);
         setAdmins(_admins);
         adminsPaysFees = _adminsPaysFees;
+        feesInTokens = _feesInTokens;
         poolFeePercentage = _poolFeePercentage;
         individualMinContribution = _individualMinContribution;
         individualMaxContribution = _individualMaxContribution;
@@ -172,15 +174,21 @@ contract Manager {
     }
 
     // calculations
-    function contributionWithoutFees(uint256 amount, address _investor) internal view returns (uint256) {
-        if (poolFeePercentage > 0 && (!isAdmin[_investor] || adminsPaysFees)) {
-            return (PERCENTAGE_MULTIPLIER - poolFeePercentage) * amount / PERCENTAGE_MULTIPLIER;
-        } else {
-            return amount;
+    function contributionWithoutFees(uint256 _amount, address _investor) internal view returns (uint256) {
+        if (feesInTokens || poolFeePercentage == 0 || (isAdmin[_investor] && !adminsPaysFees)) {
+            return _amount;
         }
+        return percentageOfContribution(_amount, _investor);
+    }
+
+    function percentageOfContribution(uint256 _amount, address _investor) internal view returns (uint256) {
+        if (poolFeePercentage == 0 || (isAdmin[_investor] && !adminsPaysFees)) {
+            return _amount;
+        }
+        return (PERCENTAGE_MULTIPLIER - poolFeePercentage) * _amount / PERCENTAGE_MULTIPLIER;
     }
 
     function shareOf(address _contributor) internal view returns (uint256) {
-        return contributionWithoutFees(contributions[_contributor], _contributor) * tokenBalance / poolContribution;
+        return percentageOfContribution(contributions[_contributor], _contributor) * tokenBalance / poolContribution;
     }
 }

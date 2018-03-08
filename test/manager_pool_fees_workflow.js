@@ -8,7 +8,7 @@ contract('manager with admins dont pay fees workflow', async (accounts)  => {
     this.owner = accounts[0];
     this.investors = [accounts[1], accounts[2], accounts[3]];
     this.admins = [accounts[4], accounts[5], accounts[6]];
-    this.instance = await Manager.new(300, 0, 0, 0, false,[this.admins[0], this.admins[1], this.admins[2]]);
+    this.instance = await Manager.new(300, 0, 0, 0, false, false, [this.admins[0], this.admins[1], this.admins[2]]);
     this.tokenContract = await TestToken.new(100000000, 'SomeEthereumToken', 3, 'SET');
     this.icoAddress = this.tokenContract.address;
   })
@@ -128,6 +128,8 @@ contract('manager with admins dont pay fees workflow', async (accounts)  => {
   });
 });
 contract('manager with fees are paid in ether workflow', async (accounts)  => {
+  // this is already covered by manager_base and above contract test
 });
 contract('manager with fees are paid in tokens workflow', async (accounts)  => {
+
 });
