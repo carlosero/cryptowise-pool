@@ -8,19 +8,19 @@ contract('manager unit testing', async (accounts)  => {
 	});
 	context('as investor', async ()  => {
 		it('should not allow me to contribute less than min contribution', async () => {
-			let instance = await Manager.new(0, 1000, 0, 0, false, true, []);
+			let instance = await Manager.new(0, 1000, 0, 0, false, false, false, true, []);
 			await instance.sendTransaction({ value: 1000, from: this.investors[1] });
          	await expectThrow(instance.sendTransaction({ value: 999, from: this.investors[1] }), "Error");
 		});
 
 		it('should not allow me to contribute more than max contribution', async () => {
-			let instance = await Manager.new(0, 0, 1000, 0, false, true, []);
+			let instance = await Manager.new(0, 0, 1000, 0, false, false, false, true, []);
 			await instance.sendTransaction({ value: 1000, from: this.investors[1] });
          	await expectThrow(instance.sendTransaction({ value: 1001, from: this.investors[1] }), "Error");
 		});
 
 		it('should not allow me to contribute more than poolMaxContribution', async () => {
-			let instance = await Manager.new(1000, 0, 0, 9000, false, true, []); // contract balance would be 10000
+			let instance = await Manager.new(1000, 0, 0, 9000, false, false, false, true, []); // contract balance would be 10000
 			await instance.sendTransaction({ value: 8000, from: this.investors[1] });
 			await instance.sendTransaction({ value: 2000, from: this.investors[2] });
          	await expectThrow(instance.sendTransaction({ value: 10, from: this.investors[2] }), "Error");

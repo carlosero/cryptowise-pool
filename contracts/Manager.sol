@@ -38,6 +38,8 @@ contract Manager {
     bool public feesInTokens; // wether fees are collected in tokens or in ETH
     bool public whitelistEnabled;
     mapping (address => bool) whitelist;
+    bool public blacklistEnabled;
+    mapping (address => bool) blacklist;
 
     // constants
     uint256 public PERCENTAGE_MULTIPLIER = 10000;
@@ -49,12 +51,12 @@ contract Manager {
     event StateChanged(uint256 _to);
     event TokensCollected(address _who, uint256 _amount);
 
-    function Manager(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution, bool _feesInTokens, bool _adminsPaysFees, address[] _admins) public {
+    function Manager(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution, bool _whitelistEnabled, bool _blacklistEnabled, bool _feesInTokens, bool _adminsPaysFees, address[] _admins) public {
         owner = msg.sender;
-        configurePool(_poolFeePercentage, _individualMinContribution, _individualMaxContribution, _poolMaxContribution, _feesInTokens, _adminsPaysFees, _admins); // to be handled on UI, 0.025 = 25 (x 1000)
+        configurePool(_poolFeePercentage, _individualMinContribution, _individualMaxContribution, _poolMaxContribution, _whitelistEnabled, _blacklistEnabled, _feesInTokens, _adminsPaysFees, _admins); // to be handled on UI, 0.025 = 25 (x 1000)
     }
 
-    function configurePool(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution, bool _feesInTokens, bool _adminsPaysFees, address[] _admins) internal {
+    function configurePool(uint256 _poolFeePercentage, uint256 _individualMinContribution, uint256 _individualMaxContribution, uint256 _poolMaxContribution, bool _whitelistEnabled, bool _blacklistEnabled, bool _feesInTokens, bool _adminsPaysFees, address[] _admins) internal {
         require(_poolFeePercentage >= 0 && _poolFeePercentage <= PERCENTAGE_MULTIPLIER);
         require(_individualMinContribution >= 0);
         require(_poolMaxContribution == 0 || _individualMinContribution <= _poolMaxContribution);
@@ -63,6 +65,8 @@ contract Manager {
         setAdmins(_admins);
         adminsPaysFees = _adminsPaysFees;
         feesInTokens = _feesInTokens;
+        whitelistEnabled = _whitelistEnabled;
+        blacklistEnabled = _blacklistEnabled;
         poolFeePercentage = _poolFeePercentage;
         individualMinContribution = _individualMinContribution;
         individualMaxContribution = _individualMaxContribution;
@@ -103,6 +107,7 @@ contract Manager {
         uint256 contrib = contributionWithoutFees(_amount, _owner);
         require(poolMaxContribution == 0 || (poolContribution + contrib) <= poolMaxContribution);
         require(!whitelistEnabled || whitelist[_owner]);
+        require(!blacklistEnabled || !blacklist[_owner]);
         if (!isContributor[_owner]) {
             contributors.push(_owner);
         }
@@ -187,8 +192,11 @@ contract Manager {
         contributions[_to] += _amount;
     }
 
-    function setupWhitelist(bool _whitelistEnabled, address[] _people) public onlyAdmin {
+    function setWhitelistStatus(bool _whitelistEnabled) public onlyAdmin {
         whitelistEnabled = _whitelistEnabled;
+    }
+
+    function setupWhitelist(address[] _people) public onlyAdmin {
         for (uint i = 0; i < _people.length; i++) {
             whitelist[_people[i]] = true;
         }
@@ -200,6 +208,24 @@ contract Manager {
 
     function removeFromWhitelist(address _address) public onlyAdmin {
         whitelist[_address] = false;
+    }
+
+    function setBlacklistStatus(bool _blacklistEnabled) public onlyAdmin {
+        blacklistEnabled = _blacklistEnabled;
+    }
+
+    function setupBlacklist(address[] _people) public onlyAdmin {
+        for (uint i = 0; i < _people.length; i++) {
+            blacklist[_people[i]] = true;
+        }
+    }
+
+    function addToBlacklist(address _address) public onlyAdmin {
+        blacklist[_address] = true;
+    }
+
+    function removeFromBlacklist(address _address) public onlyAdmin {
+        blacklist[_address] = false;
     }
 
     // calculations
