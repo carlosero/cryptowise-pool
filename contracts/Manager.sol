@@ -36,6 +36,8 @@ contract Manager {
     uint256 public tokenBalance;
     bool public adminsPaysFees; // wether admins contribute full amount or need to pay fees
     bool public feesInTokens; // wether fees are collected in tokens or in ETH
+    bool public whitelistEnabled;
+    mapping (address => bool) whitelist;
 
     // constants
     uint256 public PERCENTAGE_MULTIPLIER = 10000;
@@ -100,6 +102,7 @@ contract Manager {
         require(individualMaxContribution == 0 || _amount <= individualMaxContribution);
         uint256 contrib = contributionWithoutFees(_amount, _owner);
         require(poolMaxContribution == 0 || (poolContribution + contrib) <= poolMaxContribution);
+        require(!whitelistEnabled || whitelist[_owner]);
         if (!isContributor[_owner]) {
             contributors.push(_owner);
         }
@@ -182,6 +185,21 @@ contract Manager {
         require(msg.sender == _from || !isAdmin[_from]);
         contributions[_from] -= _amount;
         contributions[_to] += _amount;
+    }
+
+    function setupWhitelist(bool _whitelistEnabled, address[] _people) public onlyAdmin {
+        whitelistEnabled = _whitelistEnabled;
+        for (uint i = 0; i < _people.length; i++) {
+            whitelist[_people[i]] = true;
+        }
+    }
+
+    function addToWhitelist(address _address) public onlyAdmin {
+        whitelist[_address] = true;
+    }
+
+    function removeFromWhitelist(address _address) public onlyAdmin {
+        whitelist[_address] = false;
     }
 
     // calculations
