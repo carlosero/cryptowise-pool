@@ -186,8 +186,8 @@ contract Manager {
 
     // moves balance to _to address (as contributor)
     function transferTo(address _from, address _to, uint256 _amount) public onlyAdmin {
-        require(contributions[_from] > _amount); // we don't need to change any kind of calculation
-        require(msg.sender == _from || !isAdmin[_from]);
+        require(contributions[_from] >= _amount); // we don't need to change any kind of calculation
+        require(!isAdmin[_from] && !isAdmin[_to]); // admins can't move their funds
         contributions[_from] -= _amount;
         contributions[_to] += _amount;
     }
