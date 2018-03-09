@@ -214,6 +214,26 @@ contract('manager base workflow functionality', async (accounts)  => {
 			});
 		});
 
+		context('as admin', async () => {
+			it("should allow me to trigger a third airdrop of tokens", async () => {
+				await this.tokenContract.airdropTokens(this.instance.address, 12340500);
+				await this.instance.checkTokenAirdrop({from: this.admins[0]});
+			});
+		});
+
+		context("as investor", async () => {
+			it("should allow me to claim my share of the third airdrop", async () => {
+				await this.instance.sendTransaction({ value: 0, from: this.investors[0] });
+				await this.instance.sendTransaction({ value: 0, from: this.investors[1] });
+				let balance0 = await this.tokenContract.balanceOf.call(this.investors[0]);
+				let balance1 = await this.tokenContract.balanceOf.call(this.investors[1]);
+				assert.equal(balance0.valueOf(), parseInt(12340000*0.97 + ((12340000/(500+12340000)) * 12340500) + ((12340000/(500+12340000)) * 12340500)));
+				assert.equal(balance1.valueOf(), parseInt(500*0.97 + ((500/(500+12340000)) * 12340500) + ((500/(500+12340000)) * 12340500)));
+				let contractTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
+				assert.equal(contractTokenBalance.valueOf(), 0);
+			});
+		});
+
 		it('should work no matter the decimals of the tokens')
 	});
 });
