@@ -7,7 +7,7 @@ async function expectCanInvest(instance, investor) {
 }
 
 async function expectCanNotInvest(instance, investor) {
-	await expectThrow(instance.sendTransaction({ value: 12340000, from: investor }));
+	await expectThrow(instance.sendTransaction({ value: 12340000, from: investor }), "Error");
 	assert.equal((await instance.contributions.call(investor)).valueOf(), 0);
 }
 
