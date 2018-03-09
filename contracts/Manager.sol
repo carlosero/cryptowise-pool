@@ -158,9 +158,9 @@ contract Manager {
         assert(poolFeesSent == false);
         assert(poolFees > 0);
         assert(feesInTokens || this.balance >= poolFees);
-        uint256 _poolFeesInTokensAmount = poolFeesInTokensAmount();
-        assert(!feesInTokens || tokenBalance >= _poolFeesInTokensAmount);
         if (feesInTokens) {
+            uint256 _poolFeesInTokensAmount = poolFeesInTokensAmount();
+            assert(tokenBalance >= _poolFeesInTokensAmount);
             tokenContract.transfer(msg.sender, _poolFeesInTokensAmount);
         } else {
             msg.sender.transfer(poolFees);
@@ -198,10 +198,19 @@ contract Manager {
     }
 
     function shareOf(address _contributor) internal view returns (uint256) {
-        return contributionWithoutFees(contributions[_contributor], _contributor) * tokenBalance / (feesInTokens ? entireContribution : poolContribution);
+        return percentageOf(contributionWithoutFees(contributions[_contributor], _contributor), totalPoolContributionForCalculations(), tokenBalance);
     }
 
     function poolFeesInTokensAmount() internal view returns (uint256) {
-        return tokenBalance - contributionPercentageOf(tokenBalance);
+        // should be pool fees out of poolContribution percentage of tokenBalance
+        return percentageOf(poolFees, totalPoolContributionForCalculations(), tokenBalance);
+    }
+
+    function percentageOf(uint256 numerator, uint256 denominator, uint256 value) internal view returns (uint256) {
+        return numerator * value / denominator;
+    }
+
+    function totalPoolContributionForCalculations() internal view returns (uint256) {
+        return feesInTokens ? entireContribution : poolContribution;
     }
 }
