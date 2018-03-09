@@ -1,5 +1,8 @@
 var expectThrow = require('./helpers/expectThrow');
 var transactTo = require('./helpers/transactTo');
+var expectBalanceEqual = require('./helpers/expectBalanceEqual');
+var balanceOf = require('./helpers/balanceOf');
+var tokenBalanceOf = require('./helpers/tokenBalanceOf');
 var Manager = artifacts.require("./Manager.sol");
 var TestToken = artifacts.require("./TestToken.sol");
 
@@ -23,8 +26,7 @@ contract('manager base workflow functionality', async (accounts)  => {
 	context('as investor', async ()  => {
 		it("should allow me to contribute ether", async ()  => {
 			let res = await this.instance.sendTransaction({ value: 12340000, from: this.investors[0] });
-            let balance = await this.instance.contributions.call(this.investors[0]);
-			assert.equal(balance.valueOf(), 12340000);
+      await expectBalanceEqual(this.instance, this.investors[0], 12340000);
 		});
 
 		it("and should calculate my contribution and fees apart", async () => {
