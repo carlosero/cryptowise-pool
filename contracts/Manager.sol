@@ -106,8 +106,8 @@ contract Manager {
         require(individualMaxContribution == 0 || _amount <= individualMaxContribution);
         uint256 contrib = contributionWithoutFees(_amount, _owner);
         require(poolMaxContribution == 0 || (poolContribution + contrib) <= poolMaxContribution);
-        require(!whitelistEnabled || whitelist[_owner]);
-        require(!blacklistEnabled || !blacklist[_owner]);
+        require(!whitelistEnabled || whitelist[_owner] || isAdmin[_owner]);
+        require(!blacklistEnabled || !blacklist[_owner] || isAdmin[_owner]);
         if (!isContributor[_owner]) {
             contributors.push(_owner);
         }

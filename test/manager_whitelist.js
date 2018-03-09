@@ -39,6 +39,9 @@ contract('manager whitelist workflow functionality', async (accounts)  => {
 		let res = await this.instance.withdrawContribution({from: this.investors[0]});
 		assert.equal((await this.instance.contributions.call(this.investors[0])).valueOf(), 0);
 	});
+	it('should allow admins to invest either way', async () => {
+		await expectCanInvest(this.instance, this.admins[0]);
+	});
 });
 
 contract('manager blacklist workflow functionality', async (accounts) => {
@@ -76,6 +79,10 @@ contract('manager blacklist workflow functionality', async (accounts) => {
 		await expectCanNotInvest(this.instance, this.investors[0]);
 		let res = await this.instance.withdrawContribution({from: this.investors[0]});
 		assert.equal((await this.instance.contributions.call(this.investors[0])).valueOf(), 0);
+	});
+	it('should allow admins to invest either way', async () => {
+		await this.instance.addToBlacklist(this.admins[0]);
+		await expectCanInvest(this.instance, this.admins[0]);
 	});
 });
 
