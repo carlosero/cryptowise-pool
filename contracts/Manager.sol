@@ -206,7 +206,7 @@ contract Manager {
         return percentageOf(poolFees, totalPoolContributionForCalculations(), tokenBalance);
     }
 
-    function percentageOf(uint256 numerator, uint256 denominator, uint256 value) internal view returns (uint256) {
+    function percentageOf(uint256 numerator, uint256 denominator, uint256 value) internal pure returns (uint256) {
         return numerator * value / denominator;
     }
 

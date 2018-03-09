@@ -365,10 +365,8 @@ contract('manager with fees are paid in tokens and admins dont pay fees workflow
         assert.equal(adminBalance.valueOf(), 0);
         let poolFees = await this.instance.poolFees.call();
         poolFessInTokens = parseInt(poolFees.valueOf());
-        console.log("poolFessInTokens is ", poolFessInTokens)
         await this.instance.collectFees({from: this.admins[1]});
         let newBalance = await this.tokenContract.balanceOf.call(this.admins[1]).valueOf();
-        console.log("newBalance is ", newBalance)
         assert.equal(newBalance.valueOf(), poolFessInTokens);
         let poolFeesSent = await this.instance.poolFeesSent.call();
         assert.equal(poolFeesSent.valueOf(), true);
