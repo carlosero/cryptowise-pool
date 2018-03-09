@@ -33,7 +33,9 @@ contract Manager {
     bool public poolFeesSent = false;
     mapping (address => bool) public tokensCollected;
     EIP20Interface public tokenContract;
-    uint256 public tokenBalance;
+    uint256 public entireTokenBalance; // just for knowing how much tokens in total we received
+    uint256 public tokenBalance; // current token airdrop
+    uint256 public claimedTokenBalance; // keep track of how much tokens people withdrew
     bool public adminsPaysFees; // wether admins contribute full amount or need to pay fees
     bool public feesInTokens; // wether fees are collected in tokens or in ETH
     bool public whitelistEnabled;
@@ -110,6 +112,7 @@ contract Manager {
         require(!blacklistEnabled || !blacklist[_owner] || isAdmin[_owner]);
         if (!isContributor[_owner]) {
             contributors.push(_owner);
+            isContributor[_owner] = true;
         }
         contributions[_owner] += _amount;
         entireContribution += _amount;
@@ -145,9 +148,26 @@ contract Manager {
     // instantiates token contract address
     // enables withdrawal of tokens
     function tokensReceived(address _tokenAddress) public whileClosed onlyAdmin {
+        require(tokenBalance == 0); // only works for the first airdrop
         tokenContract = EIP20Interface(_tokenAddress);
         tokenBalance = tokenContract.balanceOf(this);
+        assert(tokenBalance > 0); // if address was wrong or we didn't receive tokens we should not continue
+        entireTokenBalance += tokenBalance;
         setState(2);
+    }
+
+    // for locked-up balances or continuous token airdrops
+    function checkTokenAirdrop() public whileDistribution onlyAdmin {
+        require(claimedTokenBalance == tokenBalance); // only work when all current tokens were claimed
+        uint256 newBalance = tokenContract.balanceOf(this);
+        if (newBalance > 0) {
+            entireTokenBalance += newBalance;
+            tokenBalance = newBalance;
+            claimedTokenBalance = 0;
+            for (uint i = 0; i < contributors.length; i++) {
+                tokensCollected[contributors[i]] = false;
+            }
+        }
     }
 
     // each contributor can call this for receiving their tokens
@@ -155,8 +175,9 @@ contract Manager {
         require(_owner == msg.sender || isAdmin[msg.sender]); // make it only user can withdraw or admin can trigger this
         assert(tokensCollected[_owner] == false);
         assert(contributions[_owner] > 0);
-        uint256 amount = shareOf(_owner);
+        uint256 amount = shareOfTokens(_owner);
         tokensCollected[_owner] = true;
+        claimedTokenBalance += amount;
         tokenContract.transfer(_owner, amount);
         TokensCollected(_owner, amount);
     }
@@ -169,6 +190,7 @@ contract Manager {
         if (feesInTokens) {
             uint256 _poolFeesInTokensAmount = poolFeesInTokensAmount();
             assert(tokenBalance >= _poolFeesInTokensAmount);
+            claimedTokenBalance += _poolFeesInTokensAmount;
             tokenContract.transfer(msg.sender, _poolFeesInTokensAmount);
         } else {
             msg.sender.transfer(poolFees);
@@ -190,6 +212,10 @@ contract Manager {
         require(!isAdmin[_from] && !isAdmin[_to]); // admins can't move their funds
         contributions[_from] -= _amount;
         contributions[_to] += _amount;
+        if (!isContributor[_to]) {
+            contributors.push(_to);
+            isContributor[_to] = true;
+        }
     }
 
     function setWhitelistStatus(bool _whitelistEnabled) public onlyAdmin {
@@ -241,7 +267,7 @@ contract Manager {
         return (PERCENTAGE_MULTIPLIER - poolFeePercentage) * _amount / PERCENTAGE_MULTIPLIER;
     }
 
-    function shareOf(address _contributor) internal view returns (uint256) {
+    function shareOfTokens(address _contributor) internal view returns (uint256) {
         return percentageOf(contributionWithoutFees(contributions[_contributor], _contributor), totalPoolContributionForCalculations(), tokenBalance);
     }
 

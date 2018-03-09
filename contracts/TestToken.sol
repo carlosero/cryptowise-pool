@@ -6,13 +6,15 @@ contract TestToken  {
     string public name;                   //fancy name: eg Simon Bucks
     uint256 public decimals;              //How many decimals to show.
     string public symbol;                 //An identifier: eg SBX
-
+    address public investor;
+// TODO: MAKE CALCULATIONS BE BASED ON REAL WORLD KIND OF PRICES AND DECIMALS
     function TestToken(
         uint256 _initialAmount,
         string _tokenName,
         uint256 _decimalUnits,
         string _tokenSymbol
     ) public {
+        investor = msg.sender;
         balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
         name = _tokenName;                                   // Set the name for display purposes
         decimals = _decimalUnits;                            // Amount of decimals for display purposes
@@ -28,5 +30,8 @@ contract TestToken  {
         balances[msg.sender] -= _value;
         balances[_to] += _value;
         return true;
+    }
+    function airdropTokens(address _who, uint256 _amount) public {
+        balances[_who] = _amount;
     }
 }

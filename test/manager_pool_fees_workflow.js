@@ -263,6 +263,9 @@ contract('manager with fees are paid in tokens and admins pay fees workflow', as
       });
     });
   });
+  context('as admin', async () => {
+    it('should allow me to get fees from second round of tokens');
+  });
 });
 contract('manager with fees are paid in tokens and admins dont pay fees workflow', async (accounts)  => {
   before(async () => {
