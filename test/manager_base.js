@@ -38,12 +38,12 @@ contract('manager base workflow functionality', async (accounts)  => {
 
 		it("should allow me to withdraw the ether I contributed", async ()  => {
 			investorBalance = web3.eth.getBalance(this.investors[0]).valueOf();
-            let res = await this.instance.withdrawContribution({from: this.investors[0]});
-            gas = res.receipt.gasUsed * 100000000000;
-            newBalance = parseInt(web3.eth.getBalance(this.investors[0]).valueOf());
-            assert.approximately(newBalance, investorBalance-gas+12340000, 100000);
-            let balance = await this.instance.contributions.call(this.investors[0]);
-            assert.equal(balance.valueOf(), 0);
+      let res = await this.instance.withdrawContribution({from: this.investors[0]});
+      gas = res.receipt.gasUsed * 100000000000;
+      newBalance = parseInt(web3.eth.getBalance(this.investors[0]).valueOf());
+      assert.approximately(newBalance, investorBalance-gas+12340000, 100000);
+      let balance = await this.instance.contributions.call(this.investors[0]);
+      assert.equal(balance.valueOf(), 0);
 		});
 
 		it("and should re-calculate pool contribution and fees", async () => {

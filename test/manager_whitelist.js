@@ -30,6 +30,15 @@ contract('manager whitelist workflow functionality', async (accounts)  => {
 		await expectCanInvest(this.instance, this.investors[1]);
 		await expectCanInvest(this.instance, this.investors[2]);
 	});
+	it('should allow investors now outside of whitelist to retire their funds', async () => {
+		await this.instance.setWhitelistStatus(true);
+		await this.instance.removeFromWhitelist(this.investors[0]);
+		let balance = await this.instance.contributions.call(this.investors[0]);
+		assert.isAbove(balance.valueOf(), 0);
+		await expectCanNotInvest(this.instance, this.investors[0]);
+		let res = await this.instance.withdrawContribution({from: this.investors[0]});
+		assert.equal((await this.instance.contributions.call(this.investors[0])).valueOf(), 0);
+	});
 });
 
 contract('manager blacklist workflow functionality', async (accounts) => {
@@ -58,6 +67,15 @@ contract('manager blacklist workflow functionality', async (accounts) => {
 		await expectCanInvest(this.instance, this.investors[0]);
 		await expectCanInvest(this.instance, this.investors[1]);
 		await expectCanInvest(this.instance, this.investors[2]);
+	});
+	it('should allow investors now inside of blacklist to retire their funds', async () => {
+		await this.instance.setBlacklistStatus(true);
+		await this.instance.addToBlacklist(this.investors[0]);
+		let balance = await this.instance.contributions.call(this.investors[0]);
+		assert.isAbove(balance.valueOf(), 0);
+		await expectCanNotInvest(this.instance, this.investors[0]);
+		let res = await this.instance.withdrawContribution({from: this.investors[0]});
+		assert.equal((await this.instance.contributions.call(this.investors[0])).valueOf(), 0);
 	});
 });
 
