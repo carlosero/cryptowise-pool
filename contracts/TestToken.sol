@@ -22,7 +22,8 @@ contract TestToken  {
     }
 
     function () external payable { // ether received = tokens (1 == 1)
-        balances[msg.sender] = msg.value; // for testing purposes
+        // balances[msg.sender] = msg.value / 167000000000000; // TODO: 0.000167 ETH is the token price
+        balances[msg.sender] = msg.value; // testing purposes
     }
     function balanceOf(address _owner) public view returns (uint256) { return balances[_owner]; }
     function transfer(address _to, uint256 _value) public returns (bool success) {
