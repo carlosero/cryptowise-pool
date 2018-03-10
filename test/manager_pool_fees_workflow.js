@@ -2,6 +2,7 @@ var expectThrow = require('./helpers/expectThrow');
 var transactTo = require('./helpers/transactTo');
 var Manager = artifacts.require("./Manager.sol");
 var TestToken = artifacts.require("./TestToken.sol");
+var expectEqualAttribute = require('./helpers/expectEqualAttribute');
 
 contract('manager with admins dont pay fees workflow', async (accounts)  => {
   before(async () => {
@@ -23,15 +24,12 @@ contract('manager with admins dont pay fees workflow', async (accounts)  => {
   context('as investor', async ()  => {
     it("should allow me to contribute ether", async ()  => {
       await this.instance.sendTransaction({ value: 12340000, from: this.investors[0] });
-      let balance = await this.instance.contributions.call(this.investors[0]);
-      assert.equal(balance.valueOf(), 12340000);
+      await expectEqualAttribute(this.instance.contributions.call(this.investors[0]), 12340000);
     });
 
     it("should calculate my contribution and fees apart", async () => {
-      let poolContribution = await this.instance.poolContribution.call();
-      let poolFees = await this.instance.poolFees.call();
-      assert.equal(poolContribution.valueOf(), 11969800);
-      assert.equal(poolFees.valueOf(), 370200);
+      await expectEqualAttribute(this.instance.poolContribution.call(), 11969800);
+      await expectEqualAttribute(this.instance.poolFees.call(), 370200);
     });
 
     it("should allow me to withdraw the ether I contributed", async ()  => {
@@ -40,8 +38,7 @@ contract('manager with admins dont pay fees workflow', async (accounts)  => {
       gas = res.receipt.gasUsed * 100000000000;
       newBalance = parseInt(web3.eth.getBalance(this.investors[0]).valueOf());
       assert.approximately(newBalance, investorBalance-gas+12340000, 100000);
-      let balance = await this.instance.contributions.call(this.investors[0]);
-      assert.equal(balance.valueOf(), 0);
+      await expectEqualAttribute(this.instance.contributions.call(this.investors[0]), 0);
     });
   });
 
@@ -52,15 +49,12 @@ contract('manager with admins dont pay fees workflow', async (accounts)  => {
     })
     it("should allow me to contribute ether", async ()  => {
       await this.instance.sendTransaction({ value: 12340000, from: this.admins[0] });
-      let balance = await this.instance.contributions.call(this.admins[0]);
-      assert.equal(balance.valueOf(), 12340000);
+      await expectEqualAttribute(this.instance.contributions.call(this.admins[0]), 12340000);
     });
 
     it("should calculate my contribution and fees apart", async () => {
-      let poolContribution = await this.instance.poolContribution.call();
-      let poolFees = await this.instance.poolFees.call();
-      assert.equal(poolContribution.valueOf(), 12340000);
-      assert.equal(poolFees.valueOf(), 0);
+      await expectEqualAttribute(this.instance.poolContribution.call(), 12340000);
+      await expectEqualAttribute(this.instance.poolFees.call(), 0);
     });
 
     it("should allow me to withdraw the ether I contributed", async ()  => {
@@ -69,8 +63,7 @@ contract('manager with admins dont pay fees workflow', async (accounts)  => {
       gas = res.receipt.gasUsed * 100000000000;
       newBalance = parseInt(web3.eth.getBalance(this.admins[0]).valueOf());
       assert.approximately(newBalance, investorBalance-gas+12340000, 100000);
-      let balance = await this.instance.contributions.call(this.admins[0]);
-      assert.equal(balance.valueOf(), 0);
+      await expectEqualAttribute(this.instance.contributions.call(this.admins[0]), 0);
     });
   });
 
@@ -80,8 +73,7 @@ contract('manager with admins dont pay fees workflow', async (accounts)  => {
       await transactTo(this.instance, 1, this.admins[2]);
       await this.instance.sendContribution(this.icoAddress, {from: this.admins[2] });
       assert.equal(web3.eth.getBalance(this.icoAddress).valueOf(), poolContribution.valueOf());
-      poolContributionSent = await this.instance.poolContributionSent.call();
-      assert.equal(poolContributionSent.valueOf(), true);
+      await expectEqualAttribute(this.instance.poolContributionSent.call(), true);
     });
 
     it("should allow me to configure token contract", async () => {
@@ -102,28 +94,23 @@ contract('manager with admins dont pay fees workflow', async (accounts)  => {
         gas = res.receipt.gasUsed * 100000000000;
         newBalance = parseInt(web3.eth.getBalance(this.admins[1]).valueOf());
         assert.approximately(newBalance, adminBalance-gas+parseInt(poolFees.valueOf()), 100000);
-        let poolFeesSent = await this.instance.poolFeesSent.call();
-        assert.equal(poolFeesSent.valueOf(), true);
+        await expectEqualAttribute(this.instance.poolFeesSent.call(), true);
       });
 
       it("should allow me to withdraw my tokens", async () => {
         let initialTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
         await this.instance.sendTransaction({ value: 0, from: this.admins[1] });
-        let balance0 = await this.tokenContract.balanceOf.call(this.admins[1]);
-        let contractTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
-        assert.equal(balance0.valueOf(), 12340000); // see tests from above
-        assert.equal(contractTokenBalance.valueOf(), initialTokenBalance - (12340000));
+        await expectEqualAttribute(this.tokenContract.balanceOf.call(this.admins[1]), 12340000);
+        await expectEqualAttribute(this.tokenContract.balanceOf.call(this.instance.address), initialTokenBalance - (12340000));
       });
     });
     context("as investor", async () => {
       it("should allow me to withdraw my tokens", async () => {
         let initialTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
         await this.instance.sendTransaction({ value: 0, from: this.investors[0] });
-        let balance0 = await this.tokenContract.balanceOf.call(this.investors[0]);
-        let contractTokenBalance = await this.tokenContract.balanceOf.call(this.instance.address);
-        assert.equal(balance0.valueOf(), 12340000*0.97); // see tests from above
-        assert.equal(contractTokenBalance.valueOf(), initialTokenBalance - (12340000*0.97)); // after sending all contribution this should be 0
-        assert.equal(contractTokenBalance.valueOf(), 0); // after sending all contribution this should be 0
+        await expectEqualAttribute(this.tokenContract.balanceOf.call(this.investors[0]), 12340000*0.97); // see tests from above
+        await expectEqualAttribute(this.tokenContract.balanceOf.call(this.instance.address), initialTokenBalance - (12340000*0.97)); // after sending all contribution this should be 0
+        await expectEqualAttribute(this.tokenContract.balanceOf.call(this.instance.address), 0); // after sending all contribution this should be 0
       });
     });
   });
