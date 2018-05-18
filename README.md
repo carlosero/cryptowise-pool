@@ -35,6 +35,6 @@ And then you can just play with it. You can deploy contract to test net or main 
 
 ### Contact
 
-- Developer: Carlos Rodríguez @carlosero
+- Developer: Carlos Rodríguez [@carlosero](https://github.com/carlosero)
 - Email: ecarlos.rodriguez@gmail.com
-- Website: cryptowise.net
+- Website: [cryptowise.net](https://www.cryptowise.net/)
